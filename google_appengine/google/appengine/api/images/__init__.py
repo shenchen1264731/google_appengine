@@ -203,7 +203,7 @@ class Image(object):
       image_data: String of the image data.
       blob_key: A `BlobKey`, `BlobInfo`, string, or Unicode representation of
           the blob key of the blob that contains the image data.
-      filename: String of the file name of a Google Storage file that
+      filename: String of the the file name of a Google Storage file that
           contains the image data. Must be in the format
           `/gs/bucket_name/object_name`.
 
@@ -1795,7 +1795,7 @@ def histogram_async(image_data, rpc=None):
   return image.histogram_async(rpc)
 
 
-IMG_SERVING_SIZES_LIMIT = 3200
+IMG_SERVING_SIZES_LIMIT = 1600
 
 
 IMG_SERVING_SIZES = [

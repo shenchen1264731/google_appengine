@@ -208,16 +208,11 @@ function abortJob(name, mapreduce_id) {
 
 // Retrieve the detail for a job.
 function getJobDetail(jobId, resultFunc) {
-  var data = {'mapreduce_id': jobId};
-  var namespace = getNamespace();
-  if (namespace || namespace == '') {
-    data.namespace = namespace;
-  }
   $.ajax({
     type: 'GET',
     url: 'command/get_job_detail',
     dataType: 'text',
-    data: data,
+    data: {'mapreduce_id': jobId},
     statusCode: {
       404: function() {
         setButter('job ' + jobId + ' was not found.', true);
@@ -305,16 +300,6 @@ function getElapsedTimeString(start_timestamp_ms, updated_timestamp_ms) {
 function getJobId() {
   var jobId = $.url().param('mapreduce_id');
   return jobId == null ? '' : jobId;
-}
-
-
-/**
- * Retrieves the namespace from the query string.
- * @return {string} namespace to use in Datastore queries, may be null.
- */
-function getNamespace() {
-  var namespace = $.url().param('namespace');
-  return namespace;
 }
 
 /********* Specific to overview status page *********/

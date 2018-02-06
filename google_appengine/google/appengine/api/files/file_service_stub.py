@@ -609,10 +609,6 @@ class BlobstoreFile(object):
 class FileServiceStub(apiproxy_stub.APIProxyStub):
   """Python stub for file service."""
 
-
-
-  THREADSAFE = False
-
   def __init__(self, blob_storage):
     """Constructor."""
     super(FileServiceStub, self).__init__('file',

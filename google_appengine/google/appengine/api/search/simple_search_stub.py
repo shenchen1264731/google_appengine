@@ -411,12 +411,6 @@ class SimpleIndex(object):
     """Returns the index specification for the index."""
     return self._index_spec
 
-  def _ValidateDocument(self, document):
-    """Extra validations beyond search._NewDocumentFromPb."""
-    for facet in document.facet_list():
-      if not facet.value().string_value():
-        raise ValueError('Facet value is empty')
-
   def IndexDocuments(self, documents, response):
     """Indexes an iterable DocumentPb.Document."""
     for document in documents:
@@ -432,7 +426,6 @@ class SimpleIndex(object):
 
 
       try:
-        self._ValidateDocument(document)
         search._NewDocumentFromPb(document)
       except ValueError, e:
         new_status = response.add_status()
@@ -578,21 +571,15 @@ class SimpleIndex(object):
           default_text = sort_spec.default_value_text()
         if sort_spec.has_default_value_numeric():
           default_numeric = sort_spec.default_value_numeric()
-
-        allow_rank = bool(sort_spec.sort_descending())
-
         try:
           text_val = expression_evaluator.ExpressionEvaluator(
               scored_doc, self._inverted_index, True).ValueOf(
-                  sort_spec.sort_expression(),
-                  default_value=default_text,
+                  sort_spec.sort_expression(), default_value=default_text,
                   return_type=search_util.EXPRESSION_RETURN_TYPE_TEXT)
           num_val = expression_evaluator.ExpressionEvaluator(
               scored_doc, self._inverted_index, True).ValueOf(
-                  sort_spec.sort_expression(),
-                  default_value=default_numeric,
-                  return_type=search_util.EXPRESSION_RETURN_TYPE_NUMERIC,
-                  allow_rank=allow_rank)
+                  sort_spec.sort_expression(), default_value=default_numeric,
+                  return_type=search_util.EXPRESSION_RETURN_TYPE_NUMERIC)
         except expression_evaluator.QueryExpressionEvaluationError, e:
           raise expression_evaluator.ExpressionEvaluationError(
               _FAILED_TO_PARSE_SEARCH_REQUEST % (query, e))
@@ -680,10 +667,6 @@ class SearchServiceStub(apiproxy_stub.APIProxyStub):
 
 
   _MAX_STORAGE_LIMIT = 1024 * 1024 * 1024
-
-
-
-  THREADSAFE = False
 
   def __init__(self, service_name='search', index_file=None):
     """Constructor.
@@ -974,9 +957,8 @@ class SearchServiceStub(apiproxy_stub.APIProxyStub):
   def _DefaultFillSearchResponse(self, params, results, response):
     """Fills the SearchResponse with the first set of results."""
     position_range = range(0, min(params.limit(), len(results)))
-    self._FillSearchResponse(results, position_range,
-                             params.cursor_type(),
-                             _ScoreRequested(params), params.query(), response)
+    self._FillSearchResponse(results, position_range, params.cursor_type(),
+                             _ScoreRequested(params), response)
 
   def _CopyDocument(self, doc, doc_copy, field_names, ids_only=None):
     """Copies Document, doc, to doc_copy restricting fields to field_names."""
@@ -990,15 +972,8 @@ class SearchServiceStub(apiproxy_stub.APIProxyStub):
         doc_copy.add_field().CopyFrom(field)
     doc_copy.set_order_id(doc.order_id())
 
-  def _FillSearchResponse(self,
-                          results,
-                          position_range,
-                          cursor_type,
-                          score,
-                          query,
-                          response,
-                          field_names=None,
-                          ids_only=None):
+  def _FillSearchResponse(self, results, position_range, cursor_type, score,
+                          response, field_names=None, ids_only=None):
     """Fills the SearchResponse with a selection of results."""
     for i in position_range:
       result = results[i]
@@ -1006,7 +981,7 @@ class SearchServiceStub(apiproxy_stub.APIProxyStub):
       self._CopyDocument(result.document, search_result.mutable_document(),
                          field_names, ids_only)
       if cursor_type == search_service_pb.SearchParams.PER_RESULT:
-        search_result.set_cursor(self._EncodeCursor(result.document, query))
+        search_result.set_cursor(self._EncodeCursor(result.document))
       if score:
         search_result.add_score(result.score)
       for field, expression in result.expressions.iteritems():
@@ -1056,20 +1031,12 @@ class SearchServiceStub(apiproxy_stub.APIProxyStub):
       return
 
     facet_analyzer = simple_facet.SimpleFacet(params)
-    try:
-      results = facet_analyzer.RefineResults(results)
-    except ValueError, e:
-
-      self._InvalidRequest(response.mutable_status(), e)
-      response.set_matched_count(0)
-      response.clear_result()
-      return
-
+    results = facet_analyzer.RefineResults(results)
     response.set_matched_count(len(results))
     offset = 0
     if params.has_cursor():
       try:
-        doc_id = self._DecodeCursor(params.cursor(), params.query())
+        doc_id = self._DecodeCursor(params.cursor())
       except _InvalidCursorException, e:
         self._InvalidRequest(response.mutable_status(), e)
         response.set_matched_count(0)
@@ -1098,50 +1065,33 @@ class SearchServiceStub(apiproxy_stub.APIProxyStub):
         range_end = limit
         if params.cursor_type() == search_service_pb.SearchParams.SINGLE:
           document = results[range_end - 1].document
-          response.set_cursor(self._EncodeCursor(document, params.query()))
+          response.set_cursor(self._EncodeCursor(document))
       result_range = range(offset, range_end)
     else:
       result_range = range(0)
     field_names = params.field_spec().name_list()
-    self._FillSearchResponse(results, result_range,
-                             params.cursor_type(),
-                             _ScoreRequested(params),
-                             params.query(), response, field_names,
+    self._FillSearchResponse(results, result_range, params.cursor_type(),
+                             _ScoreRequested(params), response, field_names,
                              params.keys_only())
-    try:
-      facet_analyzer.FillFacetResponse(results, response)
-      response.mutable_status().set_code(
-          search_service_pb.SearchServiceError.OK)
+    facet_analyzer.FillFacetResponse(results, response)
 
-    except ValueError, e:
+    response.mutable_status().set_code(search_service_pb.SearchServiceError.OK)
 
-      self._InvalidRequest(response.mutable_status(), e)
-      response.set_matched_count(0)
-      response.clear_result()
-
-  def _EncodeCursor(self, document, query):
-    """Encodes a cursor (doc id) in the context of the given query."""
-    doc_id_hash = hashlib.sha224(document.id() + query).hexdigest()
+  def _EncodeCursor(self, document):
+    doc_id_hash = hashlib.sha224(document.id()).hexdigest()
     cursor = doc_id_hash + '|' + document.id()
     return base64.urlsafe_b64encode(cursor)
 
-  def _DecodeCursor(self, encoded_cursor, query):
-    """Decodes a cursor, expecting it to be valid for the given query."""
-    try:
-      cursor = base64.urlsafe_b64decode(encoded_cursor)
-    except TypeError:
-      raise _InvalidCursorException(
-          'Failed to parse search request "%s"; Invalid cursor string: %s' %
-          (query, encoded_cursor))
+  def _DecodeCursor(self, encoded_cursor):
+    cursor = base64.urlsafe_b64decode(encoded_cursor)
     separator = cursor.find('|')
     if separator < 0:
       raise _InvalidCursorException('Invalid cursor string: ' + encoded_cursor)
     doc_id_hash = cursor[:separator]
     doc_id = cursor[separator+1:]
-    if hashlib.sha224(doc_id + query).hexdigest() == doc_id_hash:
+    if hashlib.sha224(doc_id).hexdigest() == doc_id_hash:
       return doc_id
-    raise _InvalidCursorException('Failed to execute search request "' + query +
-                                  '"')
+    raise _InvalidCursorException('Invalid cursor string: ' + encoded_cursor)
 
   def __repr__(self):
     return search_util.Repr(self, [('__indexes', self.__indexes)])
@@ -1196,9 +1146,9 @@ class SearchServiceStub(apiproxy_stub.APIProxyStub):
             'Could not read search indexes from %s', self.__index_file)
     except (AttributeError, LookupError, ImportError, NameError, TypeError,
             ValueError, pickle.PickleError, IOError), e:
-      logging.warning('Could not read indexes from %s. Try running with the '
-                      '--clear_search_index flag. Cause:\n%r',
-                      self.__index_file, e)
+      logging.warning(
+          'Could not read indexes from %s. Try running with the '
+          '--clear_search_index flag. Cause:\n%r' % (self.__index_file, e))
     finally:
       self.__index_file_lock.release()
 

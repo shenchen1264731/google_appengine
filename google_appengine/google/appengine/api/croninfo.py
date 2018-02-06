@@ -68,8 +68,6 @@ SERVER_ID_RE_STRING = r'(?!-)[a-z\d\-]{1,63}'
 
 
 SERVER_VERSION_RE_STRING = r'(?!-)[a-z\d\-]{1,100}'
-
-
 _VERSION_REGEX = r'^(?:(?:(%s):)?)(%s)$' % (SERVER_ID_RE_STRING,
                                             SERVER_VERSION_RE_STRING)
 
@@ -148,10 +146,7 @@ class RetryParameters(validation.Validated):
   """Retry parameters for a single cron job."""
   ATTRIBUTES = {
       JOB_RETRY_LIMIT: validation.Optional(
-          validation.Range(minimum=0,
-
-                           maximum=sys.maxint,
-                           range_type=int)),
+          validation.Range(0, None, range_type=int)),
       JOB_AGE_LIMIT: validation.Optional(validation.TimeValue()),
       MIN_BACKOFF_SECONDS: validation.Optional(
           validation.Range(0.0, None, range_type=float)),

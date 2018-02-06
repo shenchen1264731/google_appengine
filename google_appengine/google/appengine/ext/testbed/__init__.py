@@ -155,13 +155,7 @@ from google.appengine.ext.cloudstorage import stub_dispatcher as gcs_dispatcher
 
 
 
-
-USE_DATASTORE_EMULATOR = False
-if USE_DATASTORE_EMULATOR:
-  import testserver_util
-
 DEFAULT_ENVIRONMENT = {
-    'APPENGINE_RUNTIME': 'python27',
     'APPLICATION_ID': 'testbed-test',
     'AUTH_DOMAIN': 'gmail.com',
     'HTTP_HOST': 'testbed.example.com',
@@ -314,17 +308,6 @@ class Testbed(object):
     self._test_stub_map._APIProxyStubMap__stub_map = dict(internal_map)
     apiproxy_stub_map.apiproxy = self._test_stub_map
     self._activated = True
-
-    if USE_DATASTORE_EMULATOR:
-      self.remote_api_stub = testserver_util.remote_api_stub
-      self.rpc_server = self.remote_api_stub.ConfigureRemoteApi(
-          os.environ['APPLICATION_ID'],
-          '/',
-          lambda: ('', ''),
-          'localhost:%d' % testserver_util.TESTSERVER_UTIL.api_port,
-          services=[],
-          apiproxy=self._test_stub_map,
-          use_remote_datastore=False)
 
   def deactivate(self):
     """Deactivates the testbed.
@@ -534,28 +517,7 @@ class Testbed(object):
       auto_id_policy: How datastore stub assigns auto IDs. This value can be
           either `AUTO_ID_POLICY_SEQUENTIAL` or `AUTO_ID_POLICY_SCATTERED`.
       **stub_kw_args: Keyword arguments passed on to the service stub.
-
-    Raises:
-      StubNotSupportedError: If datastore_sqlite_stub is None.
     """
-    if USE_DATASTORE_EMULATOR:
-
-
-
-
-
-      self._disable_stub(DATASTORE_SERVICE_NAME)
-
-      testserver_util.TESTSERVER_UTIL.reset_emulator()
-      delegate_stub = self.remote_api_stub.DatastoreStubTestbedDelegate(
-          self.rpc_server, '/')
-
-      self._test_stub_map.RegisterStub(
-          DATASTORE_SERVICE_NAME, delegate_stub)
-
-
-      self._enabled_stubs[DATASTORE_SERVICE_NAME] = None
-      return
     if not enable:
       self._disable_stub(DATASTORE_SERVICE_NAME)
       self._disable_stub(datastore_v4_stub.SERVICE_NAME)
@@ -687,15 +649,6 @@ class Testbed(object):
           real service should be disabled.
       **stub_kw_args: Keyword arguments passed on to the service stub.
     """
-    if USE_DATASTORE_EMULATOR:
-      self._disable_stub(TASKQUEUE_SERVICE_NAME)
-      delegate_stub = self.remote_api_stub.TaskqueueStubTestbedDelegate(
-          self.rpc_server, '/')
-      delegate_stub.SetUpStub(**stub_kw_args)
-      self._test_stub_map.RegisterStub(
-          TASKQUEUE_SERVICE_NAME, delegate_stub)
-      self._enabled_stubs[TASKQUEUE_SERVICE_NAME] = None
-      return
     if not enable:
       self._disable_stub(TASKQUEUE_SERVICE_NAME)
       return

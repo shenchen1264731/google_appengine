@@ -21,6 +21,9 @@ from google.net.proto import ProtocolBuffer
 import array
 import dummy_thread as thread
 
+__pychecker__ = """maxreturns=0 maxbranches=0 no-callinit
+                   unusednames=printElemNumber,debug_strs no-special"""
+
 if hasattr(ProtocolBuffer, 'ExtendableProtocolMessage'):
   _extension_runtime = True
   _ExtendableProtocolMessage = ProtocolBuffer.ExtendableProtocolMessage
@@ -30,7 +33,6 @@ else:
 
 from google.appengine.base.capabilities_pb import *
 import google.appengine.base.capabilities_pb
-google_dot_apphosting_dot_base_dot_capabilities__pb = __import__('google.appengine.base.capabilities_pb', {}, {}, [''])
 class IsEnabledRequest(ProtocolBuffer.ProtocolMessage):
   has_package_ = 0
   package_ = ""

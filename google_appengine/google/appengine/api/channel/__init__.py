@@ -18,7 +18,7 @@
 
 
 
-"""Channel API module. Deprecated."""
+"""Channel API module."""
 
 
 from channel import *

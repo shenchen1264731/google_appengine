@@ -172,9 +172,6 @@ class BlobstoreServiceStub(apiproxy_stub.APIProxyStub):
   _ACCEPTS_REQUEST_ID = True
   GS_BLOBKEY_PREFIX = 'encoded_gs_file:'
 
-
-  THREADSAFE = False
-
   def __init__(self,
                blob_storage,
                time_function=time.time,

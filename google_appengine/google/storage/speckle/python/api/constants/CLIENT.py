@@ -16,6 +16,8 @@
 #
 
 
+
+
 """MySQL CLIENT constants.
 
 These constants are used when creating the connection. Use bitwise-OR

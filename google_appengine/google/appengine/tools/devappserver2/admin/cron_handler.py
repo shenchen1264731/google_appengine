@@ -91,5 +91,4 @@ class CronHandler(admin_request_handler.AdminRequestHandler):
         relative_url=self.request.get('url'),
         headers=[('X-AppEngine-Cron', 'true')],
         body='',
-        module_name=self.request.get('target'),
         source_ip=REMOTE_IP).status

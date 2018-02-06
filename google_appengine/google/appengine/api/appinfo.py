@@ -76,8 +76,6 @@ _DELTA_REGEX = r'([0-9]+)([DdHhMm]|[sS]?)'
 _EXPIRATION_REGEX = r'\s*(%s)(\s+%s)*\s*' % (_DELTA_REGEX, _DELTA_REGEX)
 _START_PATH = '/_ah/start'
 
-_NON_WHITE_SPACE_REGEX = r'^\S+$'
-
 
 
 
@@ -154,6 +152,7 @@ MODULE_VERSION_ID_RE_STRING = (r'^(?!-)[a-z\d\-]{0,%d}[a-z\d]$' %
 _IDLE_INSTANCES_REGEX = r'^([\d]+|automatic)$'
 
 _INSTANCES_REGEX = r'^[1-9][\d]*$'
+_INSTANCE_CLASS_REGEX = r'^([fF](1|2|4|4_1G)|[bB](1|2|4|8|4_1G))$'
 
 _CONCURRENT_REQUESTS_REGEX = r'^([1-9]\d*)$'
 
@@ -174,7 +173,7 @@ BUILTIN_NAME_PREFIX = 'ah-builtin'
 RUNTIME_RE_STRING = r'[a-z][a-z0-9\-]{0,29}'
 
 API_VERSION_RE_STRING = r'[\w.]{1,32}'
-ENV_RE_STRING = r'(1|2|standard|flex|flexible)'
+ENV_RE_STRING = r'[\w.]{1,32}'
 
 SOURCE_LANGUAGE_RE_STRING = r'[\w.\-]{1,32}'
 
@@ -246,15 +245,12 @@ BETA_SETTINGS = 'beta_settings'
 VM_HEALTH_CHECK = 'vm_health_check'
 HEALTH_CHECK = 'health_check'
 RESOURCES = 'resources'
-LIVENESS_CHECK = 'liveness_check'
-READINESS_CHECK = 'readiness_check'
 NETWORK = 'network'
 VERSION = 'version'
 MAJOR_VERSION = 'major_version'
 MINOR_VERSION = 'minor_version'
 RUNTIME = 'runtime'
 API_VERSION = 'api_version'
-ENDPOINTS_API_SERVICE = 'endpoints_api_service'
 ENV = 'env'
 ENTRYPOINT = 'entrypoint'
 RUNTIME_CONFIG = 'runtime_config'
@@ -278,7 +274,6 @@ DATASTORE_AUTO_ID_POLICY = 'auto_id_policy'
 API_CONFIG = 'api_config'
 CODE_LOCK = 'code_lock'
 ENV_VARIABLES = 'env_variables'
-STANDARD_WEBSOCKET = 'standard_websocket'
 
 SOURCE_REPO_RE_STRING = r'^[a-z][a-z0-9\-\+\.]*:[^#]*$'
 SOURCE_REVISION_RE_STRING = r'^[0-9a-fA-F]+$'
@@ -334,10 +329,6 @@ PAGES = 'pages'
 NAME = 'name'
 
 
-ENDPOINTS_NAME = 'name'
-CONFIG_ID = 'config_id'
-
-
 ERROR_CODE = 'error_code'
 FILE = 'file'
 _ERROR_CODE_REGEX = r'(default|over_quota|dos_api_denial|timeout)'
@@ -354,15 +345,10 @@ OFF_ALIASES = ['no', 'n', 'False', 'f', '0', 'false']
 ENABLE_HEALTH_CHECK = 'enable_health_check'
 CHECK_INTERVAL_SEC = 'check_interval_sec'
 TIMEOUT_SEC = 'timeout_sec'
-APP_START_TIMEOUT_SEC = 'app_start_timeout_sec'
 UNHEALTHY_THRESHOLD = 'unhealthy_threshold'
 HEALTHY_THRESHOLD = 'healthy_threshold'
-FAILURE_THRESHOLD = 'failure_threshold'
-SUCCESS_THRESHOLD = 'success_threshold'
 RESTART_THRESHOLD = 'restart_threshold'
-INITIAL_DELAY_SEC = 'initial_delay_sec'
 HOST = 'host'
-PATH = 'path'
 
 
 CPU = 'cpu'
@@ -379,15 +365,6 @@ SIZE_GB = 'size_gb'
 FORWARDED_PORTS = 'forwarded_ports'
 INSTANCE_TAG = 'instance_tag'
 NETWORK_NAME = 'name'
-SUBNETWORK_NAME = 'subnetwork_name'
-SESSION_AFFINITY = 'session_affinity'
-
-
-STANDARD_SCHEDULER_SETTINGS = 'standard_scheduler_settings'
-STANDARD_MIN_INSTANCES = 'min_instances'
-STANDARD_MAX_INSTANCES = 'max_instances'
-STANDARD_TARGET_CPU_UTILIZATION = 'target_cpu_utilization'
-STANDARD_TARGET_THROUGHPUT_UTILIZATION = 'target_throughput_utilization'
 
 
 class _VersionedLibrary(object):
@@ -401,8 +378,7 @@ class _VersionedLibrary(object):
                latest_version,
                default_version=None,
                deprecated_versions=None,
-               experimental_versions=None,
-               hidden_versions=None):
+               experimental_versions=None):
     """Initializer for `_VersionedLibrary`.
 
     Args:
@@ -422,14 +398,9 @@ class _VersionedLibrary(object):
           in the Python 2.7 runtime, or `None` if the library is not available
           by default; for example, `v1`.
       deprecated_versions: A list of the versions of the library that have been
-          deprecated; for example, `["v1", "v2"]`. Order by release version.
+          deprecated; for example, `["v1", "v2"]`.
       experimental_versions: A list of the versions of the library that are
-          currently experimental; for example, `["v1"]`. Order by release
-          version.
-      hidden_versions: A list of versions that will not show up in public
-          documentation for release purposes.  If, as a result, the library
-          has no publicly documented versions, the entire library won't show
-          up in the docs. Order by release version.
+          currently experimental; for example, `["v1"]`.
     """
     self.name = name
     self.url = url
@@ -439,16 +410,6 @@ class _VersionedLibrary(object):
     self.default_version = default_version
     self.deprecated_versions = deprecated_versions or []
     self.experimental_versions = experimental_versions or []
-    self.hidden_versions = hidden_versions or []
-
-  @property
-  def hidden(self):
-    """Determines if the entire library should be hidden from public docs.
-
-    Returns:
-      True if there is every supported version is hidden.
-    """
-    return sorted(self.supported_versions) == sorted(self.hidden_versions)
 
   @property
   def non_deprecated_versions(self):
@@ -468,21 +429,12 @@ _SUPPORTED_LIBRARIES = [
         'A fast, powerful, and language-neutral HTML template system.',
         ['0.10.5'],
         latest_version='0.10.5',
-        hidden_versions=['0.10.5'],
-        ),
-    _VersionedLibrary(
-        'click',
-        'http://click.pocoo.org/',
-        'A command line library for Python.',
-        ['6.6'],
-        latest_version='6.6',
-        hidden_versions=['6.6'],
         ),
     _VersionedLibrary(
         'django',
         'http://www.djangoproject.com/',
         'A full-featured web application framework for Python.',
-        ['1.2', '1.3', '1.4', '1.5', '1.9', '1.11'],
+        ['1.2', '1.3', '1.4', '1.5', '1.9'],
         latest_version='1.4',
         ),
     _VersionedLibrary(
@@ -494,41 +446,18 @@ _SUPPORTED_LIBRARIES = [
         ),
     _VersionedLibrary(
         'endpoints',
-        'https://cloud.google.com/appengine/docs/standard/python/endpoints/',
+        'https://developers.google.com/appengine/docs/python/endpoints/',
         'Libraries for building APIs in an App Engine application.',
         ['1.0'],
         latest_version='1.0',
         ),
     _VersionedLibrary(
-        'flask',
-        'http://flask.pocoo.org/',
-        'Flask is a microframework for Python based on Werkzeug, Jinja 2 '
-        'and good intentions.',
-        ['0.12'],
-        latest_version='0.12',
-        ),
-    _VersionedLibrary(
-        'futures',
-        'https://docs.python.org/3/library/concurrent.futures.html',
-        'Backport of Python 3.2 Futures.',
-        ['3.0.5'],
-        latest_version='3.0.5',
-        ),
-    _VersionedLibrary(
         'grpcio',
-        'http://www.grpc.io/',
+        'http://http://www.grpc.io/',
         'A high performance general RPC framework',
         ['1.0.0'],
         latest_version='1.0.0',
-        experimental_versions=['1.0.0'],
-        ),
-    _VersionedLibrary(
-        'itsdangerous',
-        'http://pythonhosted.org/itsdangerous/',
-        'HMAC and SHA1 signing for Python.',
-        ['0.24'],
-        latest_version='0.24',
-        hidden_versions=['0.24'],
+        default_version='1.0.0',
         ),
     _VersionedLibrary(
         'jinja2',
@@ -541,8 +470,8 @@ _SUPPORTED_LIBRARIES = [
         'lxml',
         'http://lxml.de/',
         'A Pythonic binding for the C libraries libxml2 and libxslt.',
-        ['2.3', '2.3.5', '3.7.3'],
-        latest_version='3.7.3',
+        ['2.3', '2.3.5'],
+        latest_version='2.3',
         experimental_versions=['2.3.5'],
         ),
     _VersionedLibrary(
@@ -594,9 +523,9 @@ _SUPPORTED_LIBRARIES = [
         'pytz',
         'https://pypi.python.org/pypi/pytz?',
         'A library for cross-platform timezone calculations',
-        ['2016.4', '2017.2'],
-        latest_version='2017.2',
-        default_version='2017.2',
+        ['2016.4'],
+        latest_version='2016.4',
+        default_version='2016.4',
         ),
     _VersionedLibrary(
         'crcmod',
@@ -606,16 +535,8 @@ _SUPPORTED_LIBRARIES = [
         latest_version='1.7',
         ),
     _VersionedLibrary(
-        'protobuf',
-        'https://developers.google.com/protocol-buffers/',
-        'A library for serializing structured data',
-        ['3.0.0'],
-        latest_version='3.0.0',
-        experimental_versions=['3.0.0'],
-        ),
-    _VersionedLibrary(
         'PyAMF',
-        'https://pypi.python.org/pypi/PyAMF',
+        'http://pyamf.appspot.com/index.html',
         'A library that provides (AMF) Action Message Format functionality.',
         ['0.6.1', '0.7.2'],
         latest_version='0.6.1',
@@ -647,14 +568,7 @@ _SUPPORTED_LIBRARIES = [
         'http://docs.python.org/dev/library/ssl.html',
         'The SSL socket wrapper built-in module.',
         ['2.7', '2.7.11'],
-        latest_version='2.7.11',
-        ),
-    _VersionedLibrary(
-        'ujson',
-        'https://pypi.python.org/pypi/ujson',
-        'UltraJSON is an ultra fast JSON encoder and decoder written in pure C',
-        ['1.35'],
-        latest_version='1.35',
+        latest_version='2.7',
         ),
     _VersionedLibrary(
         'webapp2',
@@ -696,33 +610,12 @@ _NAME_TO_SUPPORTED_LIBRARY = dict((library.name, library)
 
 
 
-
-
-
-
-
-
 REQUIRED_LIBRARIES = {
-    ('django', '1.11'): [('pytz', '2017.2')],
-    ('flask', '0.12'): [('click', '6.6'), ('itsdangerous', '0.24'),
-                        ('jinja2', '2.6'), ('werkzeug', '0.11.10')],
     ('jinja2', '2.6'): [('markupsafe', '0.15'), ('setuptools', '0.6c11')],
     ('jinja2', 'latest'): [('markupsafe', 'latest'), ('setuptools', 'latest')],
     ('matplotlib', '1.2.0'): [('numpy', '1.6.1')],
     ('matplotlib', 'latest'): [('numpy', 'latest')],
-    ('protobuf', '3.0.0'): [('six', '1.9.0')],
-    ('protobuf', 'latest'): [('six', 'latest')],
-    ('grpcio', '1.0.0'): [('protobuf', '3.0.0'), ('enum', '0.9.23'),
-                          ('futures', '3.0.5'), ('six', '1.9.0'),
-                          ('setuptools', '0.6c11')],
-    ('grpcio', 'latest'): [('protobuf', 'latest'), ('enum', 'latest'),
-                           ('futures', 'latest'), ('six', 'latest'),
-                           ('setuptools', 'latest')]
 }
-
-
-
-
 
 _USE_VERSION_FORMAT = ('use one of: "%s"')
 
@@ -767,9 +660,9 @@ _MAX_URL_LENGTH = 2047
 
 _MAX_HEADER_SIZE_FOR_EXEMPTED_HEADERS = 10240
 
-_CANNED_RUNTIMES = ('contrib-dart', 'dart', 'go', 'php', 'php55', 'php7',
-                    'python', 'python27', 'python-compat', 'java', 'java7',
-                    'vm', 'custom', 'nodejs', 'ruby')
+_CANNED_RUNTIMES = ('contrib-dart', 'dart', 'go', 'php', 'php55', 'python',
+                    'python27', 'python-compat', 'java', 'java7', 'vm',
+                    'custom', 'nodejs', 'ruby')
 _all_runtimes = _CANNED_RUNTIMES
 
 
@@ -958,7 +851,7 @@ class HttpHeadersDict(validation.ValidatedDict):
 
 
       printable = set(string.printable[:-5])
-      if not all(char in printable for char in str(value)):
+      if not all(char in printable for char in value):
         raise appinfo_errors.InvalidHttpHeaderValue(
             'HTTP header field values must consist of printable characters.')
 
@@ -1022,7 +915,7 @@ class HttpHeadersDict(validation.ValidatedDict):
 
 
 class URLMap(HandlerBase):
-  r"""Maps from URLs to handlers.
+  """Maps from URLs to handlers.
 
   This class acts similar to a union type. Its purpose is to describe a mapping
   between a set of URLs and their handlers. The handler type of a given instance
@@ -1457,12 +1350,6 @@ class BuiltinHandler(validation.Validated):
       raise AttributeError
     return None
 
-  def GetUnnormalized(self, key):
-    try:
-      return super(BuiltinHandler, self).GetUnnormalized(key)
-    except AttributeError:
-      return getattr(self, key)
-
   def ToDict(self):
     """Converts a `BuiltinHander` object to a dictionary.
 
@@ -1609,29 +1496,6 @@ class CpuUtilization(validation.Validated):
   }
 
 
-class StandardSchedulerSettings(validation.Validated):
-  """Class representing StandardSchedulerSettings in AppInfoExternal."""
-
-  ATTRIBUTES = {
-      STANDARD_MAX_INSTANCES: validation.Optional(
-          validation.TYPE_INT),
-      STANDARD_MIN_INSTANCES: validation.Optional(
-          validation.TYPE_INT),
-      STANDARD_TARGET_CPU_UTILIZATION: validation.Optional(
-          validation.TYPE_FLOAT),
-      STANDARD_TARGET_THROUGHPUT_UTILIZATION: validation.Optional(
-          validation.TYPE_FLOAT),
-  }
-
-
-class EndpointsApiService(validation.Validated):
-  """Class representing EndpointsApiService in AppInfoExternal."""
-  ATTRIBUTES = {
-      ENDPOINTS_NAME: validation.Regex(_NON_WHITE_SPACE_REGEX),
-      CONFIG_ID: validation.Regex(_NON_WHITE_SPACE_REGEX),
-  }
-
-
 class AutomaticScaling(validation.Validated):
   """Class representing automatic scaling settings in AppInfoExternal."""
   ATTRIBUTES = {
@@ -1647,8 +1511,6 @@ class AutomaticScaling(validation.Validated):
       COOL_DOWN_PERIOD_SEC: validation.Optional(
           validation.Range(60, sys.maxint, int)),
       CPU_UTILIZATION: validation.Optional(CpuUtilization),
-      STANDARD_SCHEDULER_SETTINGS: validation.Optional(
-          StandardSchedulerSettings),
       TARGET_NETWORK_SENT_BYTES_PER_SEC:
       validation.Optional(validation.Range(1, sys.maxint)),
       TARGET_NETWORK_SENT_PACKETS_PER_SEC:
@@ -1842,31 +1704,6 @@ class HealthCheck(validation.Validated):
       HOST: validation.Optional(validation.TYPE_STR)}
 
 
-class LivenessCheck(validation.Validated):
-  """Class representing the liveness check configuration."""
-  ATTRIBUTES = {
-      CHECK_INTERVAL_SEC: validation.Optional(validation.Range(0, sys.maxint)),
-      TIMEOUT_SEC: validation.Optional(validation.Range(0, sys.maxint)),
-      FAILURE_THRESHOLD: validation.Optional(validation.Range(0, sys.maxint)),
-      SUCCESS_THRESHOLD: validation.Optional(validation.Range(0, sys.maxint)),
-      INITIAL_DELAY_SEC: validation.Optional(validation.Range(0, sys.maxint)),
-      PATH: validation.Optional(validation.TYPE_STR),
-      HOST: validation.Optional(validation.TYPE_STR)}
-
-
-class ReadinessCheck(validation.Validated):
-  """Class representing the readiness check configuration."""
-  ATTRIBUTES = {
-      CHECK_INTERVAL_SEC: validation.Optional(validation.Range(0, sys.maxint)),
-      TIMEOUT_SEC: validation.Optional(validation.Range(0, sys.maxint)),
-      APP_START_TIMEOUT_SEC: validation.Optional(
-          validation.Range(0, sys.maxint)),
-      FAILURE_THRESHOLD: validation.Optional(validation.Range(0, sys.maxint)),
-      SUCCESS_THRESHOLD: validation.Optional(validation.Range(0, sys.maxint)),
-      PATH: validation.Optional(validation.TYPE_STR),
-      HOST: validation.Optional(validation.TYPE_STR)}
-
-
 class VmHealthCheck(HealthCheck):
   """Class representing the configuration of the VM health check.
 
@@ -1911,12 +1748,6 @@ class Network(validation.Validated):
 
       NETWORK_NAME: validation.Optional(validation.Regex(
           GCE_RESOURCE_NAME_REGEX)),
-
-      SUBNETWORK_NAME: validation.Optional(validation.Regex(
-          GCE_RESOURCE_NAME_REGEX)),
-
-      SESSION_AFFINITY:
-          validation.Optional(bool)
   }
 
 
@@ -2169,14 +2000,10 @@ class AppInfoExternal(validation.Validated):
       API_VERSION: validation.Optional(API_VERSION_RE_STRING),
 
       ENV: validation.Optional(ENV_RE_STRING),
-      ENDPOINTS_API_SERVICE: validation.Optional(EndpointsApiService),
 
-
-      ENTRYPOINT: validation.Optional(
-          validation.Exec() if hasattr(
-              validation, 'Exec') else validation.Type(str)),
+      ENTRYPOINT: validation.Optional(validation.Type(str)),
       RUNTIME_CONFIG: validation.Optional(RuntimeConfig),
-      INSTANCE_CLASS: validation.Optional(validation.Type(str)),
+      INSTANCE_CLASS: validation.Optional(_INSTANCE_CLASS_REGEX),
       SOURCE_LANGUAGE: validation.Optional(
           validation.Regex(SOURCE_LANGUAGE_RE_STRING)),
       AUTOMATIC_SCALING: validation.Optional(AutomaticScaling),
@@ -2188,8 +2015,6 @@ class AppInfoExternal(validation.Validated):
       VM_HEALTH_CHECK: validation.Optional(VmHealthCheck),
       HEALTH_CHECK: validation.Optional(HealthCheck),
       RESOURCES: validation.Optional(Resources),
-      LIVENESS_CHECK: validation.Optional(LivenessCheck),
-      READINESS_CHECK: validation.Optional(ReadinessCheck),
       NETWORK: validation.Optional(Network),
       BUILTINS: validation.Optional(validation.Repeated(BuiltinHandler)),
       INCLUDES: validation.Optional(validation.Type(list)),
@@ -2214,7 +2039,6 @@ class AppInfoExternal(validation.Validated):
       API_CONFIG: validation.Optional(ApiConfigHandler),
       CODE_LOCK: validation.Optional(bool),
       ENV_VARIABLES: validation.Optional(EnvironmentVariables),
-      STANDARD_WEBSOCKET: validation.Optional(bool),
   }
 
   def CheckInitialized(self):
@@ -2265,6 +2089,9 @@ class AppInfoExternal(validation.Validated):
       raise appinfo_errors.TooManyURLMappings(
           'Found more than %d URLMap entries in application configuration' %
           MAX_URL_MAPS)
+    if self.service and self.module:
+      raise appinfo_errors.ModuleAndServiceDefined(
+          'Cannot define both "module" and "service" in configuration')
 
     vm_runtime_python27 = (
         self.runtime == 'vm' and
@@ -2492,7 +2319,6 @@ class AppInfoExternal(validation.Validated):
     return (self.vm or
             self.env in ['2', 'flex', 'flexible'])
 
-
 def ValidateHandlers(handlers, is_include_file=False):
   """Validates a list of handler (`URLMap`) objects.
 
@@ -2514,7 +2340,7 @@ def ValidateHandlers(handlers, is_include_file=False):
 def LoadSingleAppInfo(app_info):
   """Loads a single `AppInfo` object where one and only one is expected.
 
-  This method validates that the values in the `AppInfo` match the
+  This method validates that the the values in the `AppInfo` match the
   validators that are defined in this file, in particular,
   `AppInfoExternal.ATTRIBUTES`.
 
@@ -2563,17 +2389,6 @@ def LoadSingleAppInfo(app_info):
   elif appyaml.project:
     appyaml.application = appyaml.project
     appyaml.project = None
-
-
-
-
-
-  if appyaml.service and appyaml.module:
-    raise appinfo_errors.ModuleAndServiceDefined(
-        'Cannot define both "module" and "service" in configuration')
-  elif appyaml.service:
-    appyaml.module = appyaml.service
-    appyaml.service = None
 
   appyaml.NormalizeVmSettings()
   return appyaml
@@ -2660,6 +2475,9 @@ def ParseExpiration(expiration):
 
 
 
+_file_path_positive_re = re.compile(r'^.{1,256}$')
+
+
 _file_path_negative_1_re = re.compile(r'\.\.|^\./|\.$|/\./|^-|^_ah/|^/')
 
 
@@ -2667,7 +2485,7 @@ _file_path_negative_2_re = re.compile(r'//|/$')
 
 
 
-_file_path_negative_3_re = re.compile(r'^ | $|/ | /|\n')
+_file_path_negative_3_re = re.compile(r'^ | $|/ | /')
 
 
 
@@ -2691,10 +2509,8 @@ def ValidFilename(filename):
     An error string if the file name is invalid. `''` is returned if the file
     name is valid.
   """
-  if not filename:
-    return 'Filename cannot be empty'
-  if len(filename) > 1024:
-    return 'Filename cannot exceed 1024 characters: %s' % filename
+  if _file_path_positive_re.match(filename) is None:
+    return 'Invalid character in filename: %s' % filename
   if _file_path_negative_1_re.search(filename) is not None:
     return ('Filename cannot contain "." or ".." '
             'or start with "-" or "_ah/": %s' %

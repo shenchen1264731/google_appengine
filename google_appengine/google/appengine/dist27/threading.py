@@ -11,7 +11,6 @@ except ImportError:
 import warnings
 
 from collections import deque as _deque
-from itertools import count as _count
 from time import time as _time, sleep as _sleep
 from traceback import format_exc as _format_exc
 
@@ -532,11 +531,9 @@ class _BoundedSemaphore(_Semaphore):
         raise a ValueError.
 
         """
-        with self._Semaphore__cond:
-            if self._Semaphore__value >= self._initial_value:
-                raise ValueError("Semaphore released too many times")
-            self._Semaphore__value += 1
-            self._Semaphore__cond.notify()
+        if self._Semaphore__value >= self._initial_value:
+            raise ValueError("Semaphore released too many times")
+        return _Semaphore.release(self)
 
 
 def Event(*args, **kwargs):
@@ -565,7 +562,7 @@ class _Event(_Verbose):
 
     def _reset_internal_locks(self):
         # private!  called by Thread._reset_internal_locks by _after_fork()
-        self.__cond.__init__(Lock())
+        self.__cond.__init__()
 
     def isSet(self):
         'Return true if and only if the internal flag is true.'
@@ -580,9 +577,12 @@ class _Event(_Verbose):
         that call wait() once the flag is true will not block at all.
 
         """
-        with self.__cond:
+        self.__cond.acquire()
+        try:
             self.__flag = True
             self.__cond.notify_all()
+        finally:
+            self.__cond.release()
 
     def clear(self):
         """Reset the internal flag to false.
@@ -591,8 +591,11 @@ class _Event(_Verbose):
         set the internal flag to true again.
 
         """
-        with self.__cond:
+        self.__cond.acquire()
+        try:
             self.__flag = False
+        finally:
+            self.__cond.release()
 
     def wait(self, timeout=None):
         """Block until the internal flag is true.
@@ -615,7 +618,7 @@ class _Event(_Verbose):
                 self.__cond.wait(timeout)
             return self.__flag
         finally:
-            # NOTE(user) Added the try/except. This handles the possibility of
+            # NOTE(google) Added the try/except. This handles the possibility of
             # an asynchronous exception (e.g., DeadlineExceededError) being
             # thrown inside of Condition.wait such that it does not re-acquire
             # the lock, causing a ThreadError 'release unlocked lock' to be
@@ -628,10 +631,11 @@ class _Event(_Verbose):
                 pass
 
 # Helper to generate new thread names
-_counter = _count().next
-_counter() # Consume 0 so first non-main thread has id 1.
+_counter = 0
 def _newname(template="Thread-%d"):
-    return template % _counter()
+    global _counter
+    _counter = _counter + 1
+    return template % _counter
 
 # Active thread administration
 _active_limbo_lock = _allocate_lock()
@@ -749,7 +753,7 @@ class Thread(_Verbose):
             _start_new_thread(self.__bootstrap, ())
         except Exception:
             with _active_limbo_lock:
-                # NOTE(user) Added 'in' check. This handles the possibility of
+                # NOTE(google) Added 'in' check. This handles the possibility of
                 # an asynchronous exception (e.g., DeadlineExceededError) being
                 # thrown inside of __bootstrap_inner after it removes self from
                 # _limbo, causing a KeyError to be raised here. It is safe to
@@ -829,10 +833,10 @@ class Thread(_Verbose):
                 # shutdown) use self.__stderr.  Otherwise still use sys (as in
                 # _sys) in case sys.stderr was redefined since the creation of
                 # self.
-                if _sys and _sys.stderr is not None:
-                    print>>_sys.stderr, ("Exception in thread %s:\n%s" %
-                                         (self.name, _format_exc()))
-                elif self.__stderr is not None:
+                if _sys:
+                    _sys.stderr.write("Exception in thread %s:\n%s\n" %
+                                      (self.name, _format_exc()))
+                else:
                     # Do the best job possible w/o a huge amt. of code to
                     # approximate a traceback (code ideas from
                     # Lib/traceback.py)
@@ -973,7 +977,7 @@ class Thread(_Verbose):
                     if __debug__:
                         self._note("%s.join(): thread stopped", self)
         finally:
-            # NOTE(user) Added the try/except. This handles the possibility of
+            # NOTE(google) Added the try/except. This handles the possibility of
             # an asynchronous exception (e.g., DeadlineExceededError) being
             # thrown inside of Condition.wait such that it does not re-acquire
             # the lock, causing a ThreadError 'release unlocked lock' to be
@@ -1243,7 +1247,7 @@ def _after_fork():
     new_active = {}
     current = current_thread()
     with _active_limbo_lock:
-        for thread in _enumerate():
+        for thread in _active.itervalues():
             # Any lock/condition variable may be currently locked or in an
             # invalid state, so we reinitialize them.
             if hasattr(thread, '_reset_internal_locks'):

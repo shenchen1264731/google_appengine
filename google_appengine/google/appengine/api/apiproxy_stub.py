@@ -31,25 +31,15 @@ from __future__ import with_statement
 
 
 
-import os
 import random
 import threading
 
-
-if os.environ.get('APPENGINE_RUNTIME') == 'python27':
-  from google.appengine.api import apiproxy_rpc
-  from google.appengine.api import request_info
-  from google.appengine.runtime import apiproxy_errors
-else:
-  from google.appengine.api import apiproxy_rpc
-  from google.appengine.api import request_info
-  from google.appengine.runtime import apiproxy_errors
+from google.appengine.api import apiproxy_rpc
+from google.appengine.api import request_info
+from google.appengine.runtime import apiproxy_errors
 
 
 MAX_REQUEST_SIZE = 1 << 20
-
-REQ_SIZE_EXCEEDS_LIMIT_MSG_TEMPLATE = ('The request to API call %s.%s() was too'
-                                       ' large.')
 
 
 class APIProxyStub(object):
@@ -76,9 +66,9 @@ class APIProxyStub(object):
 
     Args:
       service_name: Service name expected for all calls.
-      max_request_size: int, maximum allowable size of the incoming request. An
+      max_request_size: int, maximum allowable size of the incoming request.  A
         apiproxy_errors.RequestTooLargeError will be raised if the inbound
-        request exceeds this size.  Default is 1 MB. Subclasses can override it.
+        request exceeds this size.  Default is 1 MB.
       request_data: A request_info.RequestInfo instance used to look up state
         associated with the request that generated an API call.
     """
@@ -100,23 +90,6 @@ class APIProxyStub(object):
     """
     return apiproxy_rpc.RPC(stub=self)
 
-  def CheckRequest(self, service, call, request):
-    """Check if a request meet some common restrictions.
-
-    Args:
-      service: Must be name as provided to service_name of constructor.
-      call: A string representing the rpc to make.
-      request: A protocol buffer of the type corresponding to 'call'.
-    """
-    assert service == self.__service_name, ('Expected "%s" service name, '
-                                            'was "%s"' % (self.__service_name,
-                                                          service))
-    if request.ByteSize() > self.__max_request_size:
-      raise apiproxy_errors.RequestTooLargeError(
-          REQ_SIZE_EXCEEDS_LIMIT_MSG_TEMPLATE % (service, call))
-    messages = []
-    assert request.IsInitialized(messages), messages
-
   def MakeSyncCall(self, service, call, request, response, request_id=None):
     """The main RPC entry point.
 
@@ -129,7 +102,14 @@ class APIProxyStub(object):
       request_id: A unique string identifying the request associated with the
           API call.
     """
-    self.CheckRequest(service, call, request)
+    assert service == self.__service_name, ('Expected "%s" service name, '
+                                            'was "%s"' % (self.__service_name,
+                                                          service))
+    if request.ByteSize() > self.__max_request_size:
+      raise apiproxy_errors.RequestTooLargeError(
+          'The request to API call %s.%s() was too large.' % (service, call))
+    messages = []
+    assert request.IsInitialized(messages), messages
 
 
 

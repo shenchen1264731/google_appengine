@@ -38,26 +38,6 @@ try:
 except ImportError:
   import simplejson
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 try:
   import PIL
   from PIL import _imaging
@@ -71,7 +51,6 @@ except ImportError:
     import Image
   except ImportError:
     from PIL import Image
-
 
 from google.appengine.api import apiproxy_stub
 from google.appengine.api import apiproxy_stub_map
@@ -171,9 +150,6 @@ def _BackendPremultiplication(color):
 
 class ImagesServiceStub(apiproxy_stub.APIProxyStub):
   """Stub version of images API to be used with the dev_appserver."""
-
-
-  THREADSAFE = False
 
   def __init__(self, service_name='images', host_prefix=''):
     """Preloads PIL to load all modules in the unhardened environment.
@@ -654,15 +630,6 @@ class ImagesServiceStub(apiproxy_stub.APIProxyStub):
 
 
 
-
-
-
-
-
-
-
-
-
       try:
 
         from PIL import TiffImagePlugin
@@ -672,9 +639,7 @@ class ImagesServiceStub(apiproxy_stub.APIProxyStub):
         # We have not managed to get this to work in the SDK with Python
         # 2.5, so just catch the ImportError and pretend there is no
         # EXIF information of interest.
-        logging.info(
-            'Sorry, TiffImagePlugin does not work in this environment')
-
+        logging.info('Sorry, TiffImagePlugin does not work in this environment')
     return None
 
   @staticmethod

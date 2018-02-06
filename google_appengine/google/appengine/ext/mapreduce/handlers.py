@@ -740,7 +740,7 @@ class MapperWorkerCallbackHandler(base_handler.HugeTaskHandler):
                    shard_state.shard_number, shard_state.mapreduce_id)
       task = None
     elif task_directive == self._TASK_DIRECTIVE.FAIL_TASK:
-      logging.error("Shard %s failed permanently.", shard_state.shard_id)
+      logging.critical("Shard %s failed permanently.", shard_state.shard_id)
       task = None
     elif task_directive == self._TASK_DIRECTIVE.RETRY_SHARD:
       logging.warning("Shard %s is going to be attempted for the %s time.",
@@ -1709,8 +1709,7 @@ class StartJobHandler(base_handler.PostJsonHandler):
         mapper_spec,
         mr_params,
         queue_name=mr_params["queue_name"],
-        _app=mapper_params.get("_app"),
-        _database_id=mapper_params.get("_database_id", ""))
+        _app=mapper_params.get("_app"))
     self.json_response["mapreduce_id"] = mapreduce_id
 
   def _get_params(self, validator_parameter, name_prefix):
@@ -1773,7 +1772,6 @@ class StartJobHandler(base_handler.PostJsonHandler):
                  countdown=None,
                  hooks_class_name=None,
                  _app=None,
-                 _database_id=None,
                  in_xg_transaction=False):
 
 
@@ -1822,7 +1820,7 @@ class StartJobHandler(base_handler.PostJsonHandler):
 
     @db.transactional(propagation=propagation)
     def _txn():
-      cls._create_and_save_state(mapreduce_spec, _app, _database_id)
+      cls._create_and_save_state(mapreduce_spec, _app)
       cls._add_kickoff_task(mapreduce_params["base_path"], mapreduce_spec, eta,
                             countdown, queue_name)
     _txn()
@@ -1830,7 +1828,7 @@ class StartJobHandler(base_handler.PostJsonHandler):
     return mapreduce_id
 
   @classmethod
-  def _create_and_save_state(cls, mapreduce_spec, _app, _database_id):
+  def _create_and_save_state(cls, mapreduce_spec, _app):
     """Save mapreduce state to datastore.
 
     Save state to datastore so that UI can see it immediately.
@@ -1838,7 +1836,6 @@ class StartJobHandler(base_handler.PostJsonHandler):
     Args:
       mapreduce_spec: model.MapreduceSpec,
       _app: app id if specified. None otherwise.
-      _database_id: Datastore database id if specified. None otherwise.
 
     Returns:
       The saved Mapreduce state.
@@ -1849,8 +1846,6 @@ class StartJobHandler(base_handler.PostJsonHandler):
     state.active_shards = 0
     if _app:
       state.app_id = _app
-    if _database_id is not None:
-      state.database_id = _database_id
     config = util.create_datastore_write_config(mapreduce_spec)
     state.put(config=config)
     return state

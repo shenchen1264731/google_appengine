@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+
 """A Python Search API used by app developers.
 
 Contains methods used to interface with Search API.
@@ -153,8 +155,9 @@ MAXIMUM_QUERY_LENGTH = 2000
 MAXIMUM_DOCUMENTS_RETURNED_PER_SEARCH = 1000
 MAXIMUM_DEPTH_FOR_FACETED_SEARCH = 10000
 MAXIMUM_FACETS_TO_RETURN = 100
-MAXIMUM_FACET_VALUES_TO_RETURN = 100
+MAXIMUM_FACET_VALUES_TO_RETURN = 20
 MAXIMUM_SEARCH_OFFSET = 1000
+
 MAXIMUM_SORTED_DOCUMENTS = 10000
 MAXIMUM_NUMBER_FOUND_ACCURACY = 25000
 MAXIMUM_FIELDS_RETURNED_PER_SEARCH = 1000
@@ -273,31 +276,12 @@ class _RpcOperationFuture(object):
     self._rpc.make_call(call, request, response)
 
   def get_result(self):
-    self._rpc.wait()
+    self._rpc.wait();
     try:
-      self._rpc.check_success()
+      self._rpc.check_success();
     except apiproxy_errors.ApplicationError, e:
       raise _ToSearchError(e)
     return self._get_result_hook()
-
-
-class _PutOperationFuture(_RpcOperationFuture):
-  """Future specialized for Index put operations."""
-
-  def __init__(self, index, request, response, deadline, get_result_hook):
-    super(_PutOperationFuture, self).__init__('IndexDocument', request,
-                                              response, deadline,
-                                              get_result_hook)
-    self._index = index
-
-  def get_result(self):
-    try:
-      return super(_PutOperationFuture, self).get_result()
-    except apiproxy_errors.OverQuotaError, e:
-      message = e.message + '; index = ' + self._index.name
-      if self._index.namespace:
-        message = message + ' in namespace ' + self._index.namespace
-      raise apiproxy_errors.OverQuotaError(message)
 
 
 class _SimpleOperationFuture(object):
@@ -329,7 +313,7 @@ def _ConvertToUTF8(value):
              'nan': 'NaN'}.get(value, value)
   elif isinstance(value, (int, long)):
     value = str(value)
-  return _ConvertToUnicode(value).encode('utf-8')
+  return _ConvertToUnicode(value).encode("utf-8")
 
 
 class OperationResult(object):
@@ -1177,7 +1161,7 @@ class NumberFacet(Facet):
 
   @classmethod
   def _CheckValue(cls, value):
-    _CheckNumber(value, 'number facet value', True)
+    _CheckNumber(value, "number facet value", True)
     if value >= MIN_NUMBER_VALUE and value <= MAX_NUMBER_VALUE:
       return value
     raise ValueError('value must be between %f and %f (got %f)' %
@@ -2585,8 +2569,7 @@ class ScoredDocument(Document):
       The list of numeric sort scores.
 
     """
-    logging.warning(
-        'sort_scores() is deprecated; please use _score in a FieldExpression.')
+    logging.warning("sort_scores() is deprecated; please use _score in a FieldExpression.")
     return self._sort_scores
 
   @property
@@ -2629,6 +2612,7 @@ class ScoredDocument(Document):
                         ('fields', self.fields),
                         ('language', self.language),
                         ('rank', self.rank),
+                        ('sort_scores', self.sort_scores),
                         ('expressions', self.expressions),
                         ('cursor', self.cursor)])
 
@@ -2874,7 +2858,7 @@ def _CheckFacetDiscoveryLimit(facet_limit):
     return None
   else:
     return _CheckInteger(
-        facet_limit, 'discovery_limit',
+        facet_limit, 'discover_facet_limit',
         upper_bound=MAXIMUM_FACETS_TO_RETURN)
 
 
@@ -2933,8 +2917,8 @@ class FacetOptions(object):
     If you wish to discovering 5 facets with 10 values each in 6000 search
     results, you can use a FacetOption object like this:
 
-    facet_option = FacetOptions(discovery_limit=5,
-                                discovery_value_limit=10,
+    facet_option = FacetOptions(discover_facet_limit=5,
+                                discover_facet_value_limit=10,
                                 depth=6000)
 
     Args:
@@ -3622,7 +3606,8 @@ class Index(object):
               _ConcatenateErrorMessages(
                   'one or more put document operations failed', status), results)
       return results
-    return _PutOperationFuture(self, request, response, deadline, hook)
+    return _RpcOperationFuture(
+        'IndexDocument', request, response, deadline, hook)
 
   def _NewDeleteResultFromPb(self, status_pb, doc_id):
     """Constructs DeleteResult from RequestStatus pb and doc_id."""
@@ -4112,7 +4097,7 @@ def _MakeSyncSearchServiceCall(call, request, response, deadline):
     ValueError: If the deadline is less than zero.
   """
   _ValidateDeadline(deadline)
-  logging.warning('_MakeSyncSearchServiceCall is deprecated; please use API.')
+  logging.warning("_MakeSyncSearchServiceCall is deprecated; please use API.")
   try:
     if deadline is None:
       apiproxy_stub_map.MakeSyncCall('search', call, request, response)

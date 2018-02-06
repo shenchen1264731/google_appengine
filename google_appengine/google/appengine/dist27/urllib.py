@@ -69,15 +69,15 @@ else:
 
 # Shortcut for basic usage
 _urlopener = None
-def urlopen(url, data=None, proxies=None, context=None):
+def urlopen(url, data=None, proxies=None):
     """Create a file-like object for the specified URL to read from."""
     from warnings import warnpy3k
     warnpy3k("urllib.urlopen() has been removed in Python 3.0 in "
              "favor of urllib2.urlopen()", stacklevel=2)
 
     global _urlopener
-    if proxies is not None or context is not None:
-        opener = FancyURLopener(proxies=proxies, context=context)
+    if proxies is not None:
+        opener = FancyURLopener(proxies=proxies)
     elif not _urlopener:
         opener = FancyURLopener()
         _urlopener = opener
@@ -87,15 +87,11 @@ def urlopen(url, data=None, proxies=None, context=None):
         return opener.open(url)
     else:
         return opener.open(url, data)
-def urlretrieve(url, filename=None, reporthook=None, data=None, context=None):
+def urlretrieve(url, filename=None, reporthook=None, data=None):
     global _urlopener
-    if context is not None:
-        opener = FancyURLopener(context=context)
-    elif not _urlopener:
-        _urlopener = opener = FancyURLopener()
-    else:
-        opener = _urlopener
-    return opener.retrieve(url, filename, reporthook, data)
+    if not _urlopener:
+        _urlopener = FancyURLopener()
+    return _urlopener.retrieve(url, filename, reporthook, data)
 def urlcleanup():
     if _urlopener:
         _urlopener.cleanup()
@@ -103,7 +99,7 @@ def urlcleanup():
     ftpcache.clear()
 
 # check for SSL
-# NOTE(user): HTTPS is available under App Engine, but the ssl module isn't.
+# NOTE(amistry): HTTPS is available under App Engine, but the ssl module isn't.
 _have_ssl = True
 
 # exception raised when downloaded size does not match content-length
@@ -126,14 +122,13 @@ class URLopener:
     version = "Python-urllib/%s" % __version__
 
     # Constructor
-    def __init__(self, proxies=None, context=None, **x509):
+    def __init__(self, proxies=None, **x509):
         if proxies is None:
             proxies = getproxies()
         assert hasattr(proxies, 'has_key'), "proxies must be a mapping"
         self.proxies = proxies
         self.key_file = x509.get('key_file')
         self.cert_file = x509.get('cert_file')
-        self.context = context
         self.addheaders = [('User-Agent', self.version)]
         self.__tempfiles = []
         self.__unlink = os.unlink # See cleanup()
@@ -423,8 +418,7 @@ class URLopener:
                 auth = None
             h = httplib.HTTPS(host, 0,
                               key_file=self.key_file,
-                              cert_file=self.cert_file,
-                              context=self.context)
+                              cert_file=self.cert_file)
             if data is not None:
                 h.putrequest('POST', selector)
                 h.putheader('Content-Type',
@@ -622,20 +616,18 @@ class FancyURLopener(URLopener):
     def http_error_302(self, url, fp, errcode, errmsg, headers, data=None):
         """Error 302 -- relocated (temporarily)."""
         self.tries += 1
-        try:
-            if self.maxtries and self.tries >= self.maxtries:
-                if hasattr(self, "http_error_500"):
-                    meth = self.http_error_500
-                else:
-                    meth = self.http_error_default
-                return meth(url, fp, 500,
-                            "Internal Server Error: Redirect Recursion",
-                            headers)
-            result = self.redirect_internal(url, fp, errcode, errmsg,
-                                            headers, data)
-            return result
-        finally:
+        if self.maxtries and self.tries >= self.maxtries:
+            if hasattr(self, "http_error_500"):
+                meth = self.http_error_500
+            else:
+                meth = self.http_error_default
             self.tries = 0
+            return meth(url, fp, 500,
+                        "Internal Server Error: Redirect Recursion", headers)
+        result = self.redirect_internal(url, fp, errcode, errmsg, headers,
+                                        data)
+        self.tries = 0
+        return result
 
     def redirect_internal(self, url, fp, errcode, errmsg, headers, data):
         if 'location' in headers:
@@ -820,10 +812,7 @@ def thishost():
     """Return the IP address of the current host."""
     global _thishost
     if _thishost is None:
-        try:
-            _thishost = socket.gethostbyname(socket.gethostname())
-        except socket.gaierror:
-            _thishost = socket.gethostbyname('localhost')
+        _thishost = socket.gethostbyname(socket.gethostname())
     return _thishost
 
 _ftperrors = None
@@ -866,11 +855,7 @@ class ftpwrapper:
         self.timeout = timeout
         self.refcount = 0
         self.keepalive = persistent
-        try:
-            self.init()
-        except:
-            self.close()
-            raise
+        self.init()
 
     def init(self):
         import ftplib
@@ -878,8 +863,8 @@ class ftpwrapper:
         self.ftp = ftplib.FTP()
         self.ftp.connect(self.host, self.port, self.timeout)
         self.ftp.login(self.user, self.passwd)
-        _target = '/'.join(self.dirs)
-        self.ftp.cwd(_target)
+        for dir in self.dirs:
+            self.ftp.cwd(dir)
 
     def retrfile(self, file, type):
         import ftplib
@@ -925,7 +910,13 @@ class ftpwrapper:
         return (ftpobj, retrlen)
 
     def endtransfer(self):
+        if not self.busy:
+            return
         self.busy = 0
+        try:
+            self.ftp.voidresp()
+        except ftperrors():
+            pass
 
     def close(self):
         self.keepalive = False
@@ -983,16 +974,11 @@ class addclosehook(addbase):
         self.hookargs = hookargs
 
     def close(self):
-        try:
-            closehook = self.closehook
-            hookargs = self.hookargs
-            if closehook:
-                self.closehook = None
-                self.hookargs = None
-                closehook(*hookargs)
-        finally:
-            addbase.close(self)
-
+        if self.closehook:
+            self.closehook(*self.hookargs)
+            self.closehook = None
+            self.hookargs = None
+        addbase.close(self)
 
 class addinfo(addbase):
     """class to add an info() method to an open file."""
@@ -1129,13 +1115,10 @@ def splitport(host):
     global _portprog
     if _portprog is None:
         import re
-        _portprog = re.compile('^(.*):([0-9]*)$')
+        _portprog = re.compile('^(.*):([0-9]+)$')
 
     match = _portprog.match(host)
-    if match:
-        host, port = match.groups()
-        if port:
-            return host, port
+    if match: return match.group(1, 2)
     return host, None
 
 _nportprog = None
@@ -1152,12 +1135,12 @@ def splitnport(host, defport=-1):
     match = _nportprog.match(host)
     if match:
         host, port = match.group(1, 2)
-        if port:
-            try:
-                nport = int(port)
-            except ValueError:
-                nport = None
-            return host, nport
+        try:
+            if not port: raise ValueError, "no digits"
+            nport = int(port)
+        except ValueError:
+            nport = None
+        return host, nport
     return host, defport
 
 _queryprog = None
@@ -1249,7 +1232,7 @@ always_safe = ('ABCDEFGHIJKLMNOPQRSTUVWXYZ'
                '0123456789' '_.-')
 _safe_map = {}
 for i, c in zip(xrange(256), str(bytearray(xrange(256)))):
-    # NOTE(user): The original code here used Python 2.7 syntax, but
+    # NOTE(guido): The original code here used Python 2.7 syntax, but
     # in App Engine we want to support Python 2.6 as well.
     _safe_map[c] = c if (i < 128 and c in always_safe) else '%%%02X' % i
 _safe_quoters = {}
@@ -1368,42 +1351,25 @@ def getproxies_environment():
     """Return a dictionary of scheme -> proxy server URL mappings.
 
     Scan the environment for variables named <scheme>_proxy;
-    this seems to be the standard convention.  In order to prefer lowercase
-    variables, we process the environment in two passes, first matches any
-    and second matches only lower case proxies.
-
-    If you need a different way, you can pass a proxies dictionary to the
+    this seems to be the standard convention.  If you need a
+    different way, you can pass a proxies dictionary to the
     [Fancy]URLopener constructor.
+
     """
     proxies = {}
     for name, value in os.environ.items():
         name = name.lower()
         if value and name[-6:] == '_proxy':
             proxies[name[:-6]] = value
-
-    for name, value in os.environ.items():
-        if name[-6:] == '_proxy':
-            name = name.lower()
-            if value:
-                proxies[name[:-6]] = value
-            else:
-                proxies.pop(name[:-6], None)
-
     return proxies
 
-def proxy_bypass_environment(host, proxies=None):
+def proxy_bypass_environment(host):
     """Test if proxies should not be used for a particular host.
 
-    Checks the proxies dict for the value of no_proxy, which should be a
-    list of comma separated DNS suffixes, or '*' for all hosts.
+    Checks the environment for a variable named no_proxy, which should
+    be a list of DNS suffixes separated by commas, or '*' for all hosts.
     """
-    if proxies is None:
-        proxies = getproxies_environment()
-    # don't bypass, if no_proxy isn't specified
-    try:
-        no_proxy = proxies['no']
-    except KeyError:
-        return 0
+    no_proxy = os.environ.get('no_proxy', '') or os.environ.get('NO_PROXY', '')
     # '*' is special case for always bypass
     if no_proxy == '*':
         return 1
@@ -1412,12 +1378,8 @@ def proxy_bypass_environment(host, proxies=None):
     # check if the host ends with any of the DNS suffixes
     no_proxy_list = [proxy.strip() for proxy in no_proxy.split(',')]
     for name in no_proxy_list:
-        if name:
-            name = re.escape(name)
-            pattern = r'(.+\.)?%s$' % name
-            if (re.match(pattern, hostonly, re.I)
-                    or re.match(pattern, host, re.I)):
-                return 1
+        if name and (hostonly.endswith(name) or host.endswith(name)):
+            return 1
     # otherwise, don't bypass
     return 0
 
@@ -1493,14 +1455,8 @@ if sys.platform == 'darwin':
         return _get_proxies()
 
     def proxy_bypass(host):
-        """Return True, if a host should be bypassed.
-
-        Checks proxy settings gathered from the environment, if specified, or
-        from the MacOSX framework SystemConfiguration.
-        """
-        proxies = getproxies_environment()
-        if proxies:
-            return proxy_bypass_environment(host, proxies)
+        if getproxies_environment():
+            return proxy_bypass_environment(host)
         else:
             return proxy_bypass_macosx_sysconf(host)
 
@@ -1616,14 +1572,14 @@ elif os.name == 'nt':
         return 0
 
     def proxy_bypass(host):
-        """Return True, if the host should be bypassed.
+        """Return a dictionary of scheme -> proxy server URL mappings.
 
-        Checks proxy settings gathered from the environment, if specified,
+        Returns settings gathered from the environment, if specified,
         or the registry.
+
         """
-        proxies = getproxies_environment()
-        if proxies:
-            return proxy_bypass_environment(host, proxies)
+        if getproxies_environment():
+            return proxy_bypass_environment(host)
         else:
             return proxy_bypass_registry(host)
 

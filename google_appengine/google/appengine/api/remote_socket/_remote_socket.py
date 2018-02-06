@@ -629,10 +629,7 @@ class socket(object):
       return inet_pton(self.family, res[4][0])
 
   def _SetProtoFromAddr(self, proto, address, hostname_hint=None):
-    if self.family == AF_INET6 and len(address) == 4:
-      address, port, unused_flow_info, unused_scope_id = address
-    else:
-      address, port = address
+    address, port = address
     proto.set_packed_address(self._GetPackedAddr(address))
     proto.set_port(port)
     proto.set_hostname_hint(hostname_hint or address)
@@ -919,8 +916,6 @@ class socket(object):
       address = (
           inet_ntop(self.family, reply.received_from().packed_address()),
           reply.received_from().port())
-      if self.family == AF_INET6:
-        address += (0, 0)
 
     return reply.data(), address
 

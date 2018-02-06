@@ -39,9 +39,8 @@ import urllib
 import google
 import webapp2
 
-# URL of the login/logout pages within the dev appserver.
+# URL of the login page within the dev appserver.
 LOGIN_URL_RELATIVE = '_ah/login'
-LOGOUT_URL_RELATIVE = '_ah/logout'
 
 # CGI parameter constants.
 CONTINUE_PARAM = 'continue'
@@ -252,55 +251,38 @@ def login_redirect(application_url, continue_url, start_response):
 
 
 class Handler(webapp2.RequestHandler):
-  """The request handler for the login and logout pages.
-
-  Login pages are of the form: '/_ah/login?continue=http://foo.com/bar'
-  Logout pages are of either form:
-    (a) '/_ah/login?continue=http://foo.com/bar&action=logout'
-    (b) '/_ah/logout?continue=http://foo.com/bar'
-
-  Option (a) is considered deprecated, but is still supported for backwards
-  compatibility. Please use option (b) for any new use cases.
-  """
+  """The request handler for the login and logout pages."""
 
   def get(self):
     action = self.request.get(ACTION_PARAM)
-    if self.request.path.startswith('/_ah/logout'):
-      action = LOGOUT_ACTION
-
     set_email = self.request.get(_EMAIL_PARAM)
     set_admin = self.request.get(_ADMIN_PARAM).lower() == 'true'
     continue_url = self.request.get(CONTINUE_PARAM)
+
     login_url = self.request.path_url
 
     if action:
+      # Perform the action and then redirect
+      if action.lower() == LOGOUT_ACTION.lower():
+        self.response.headers['Set-Cookie'] = _clear_user_info_cookie()
+      elif action.lower() == LOGIN_ACTION.lower() and set_email:
+        self.response.headers['Set-Cookie'] = _set_user_info_cookie(set_email,
+                                                                    set_admin)
+
       redirect_url = continue_url or login_url
-      self._do_action(action, set_email, set_admin, redirect_url)
+      # URLs should be ASCII-only byte strings.
+      if isinstance(redirect_url, unicode):
+        redirect_url = redirect_url.encode('ascii')
+
+      self.response.status = 302
+      self.response.status_message = 'Redirecting to continue URL'
+      self.response.headers['Location'] = redirect_url
     else:
-      self._render_login_template(login_url, continue_url)
+      email, admin, _ = _get_user_info_from_dict(self.request.cookies)
+      self.response.status = 200
+      self.response.headers['Content-Type'] = 'text/html'
+      body = _render_login_template(login_url, continue_url, email, admin)
+      self.response.write(body)
 
-  def _do_action(self, action, set_email, set_admin, redirect_url):
-    """Perform the action and then redirect."""
-    if action.lower() == LOGOUT_ACTION.lower():
-      self.response.headers['Set-Cookie'] = _clear_user_info_cookie()
-    elif action.lower() == LOGIN_ACTION.lower() and set_email:
-      self.response.headers['Set-Cookie'] = _set_user_info_cookie(set_email,
-                                                                  set_admin)
-
-    # URLs should be ASCII-only byte strings.
-    if isinstance(redirect_url, unicode):
-      redirect_url = redirect_url.encode('ascii')
-
-    self.response.status = 302
-    self.response.status_message = 'Redirecting to continue URL'
-    self.response.headers['Location'] = redirect_url
-
-  def _render_login_template(self, login_url, continue_url):
-    """Render a login template to the user."""
-    email, admin, _ = _get_user_info_from_dict(self.request.cookies)
-    self.response.status = 200
-    self.response.headers['Content-Type'] = 'text/html'
-    body = _render_login_template(login_url, continue_url, email, admin)
-    self.response.write(body)
 
 application = webapp2.WSGIApplication([('/.*', Handler)], debug=True)

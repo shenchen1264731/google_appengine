@@ -59,8 +59,7 @@ class CronHandlerTest(unittest.TestCase):
 
   def test_post(self):
     self.mox.StubOutWithMock(cron_handler.CronHandler, 'dispatcher')
-    request = webapp2.Request.blank(
-        '/cron', POST={'url': '/url', 'target': 'module_name'})
+    request = webapp2.Request.blank('/cron', POST={'url': '/url'})
     response = webapp2.Response()
     handler = cron_handler.CronHandler(request, response)
     admin_request_handler.AdminRequestHandler(handler).post()
@@ -70,7 +69,6 @@ class CronHandlerTest(unittest.TestCase):
         relative_url='/url',
         headers=[('X-AppEngine-Cron', 'true')],
         body='',
-        module_name='module_name',
         source_ip='0.1.0.1').AndReturn(
             dispatcher.ResponseTuple('500 Internal Server Error', [], ''))
     self.mox.ReplayAll()

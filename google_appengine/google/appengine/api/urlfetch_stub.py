@@ -50,7 +50,6 @@ from google.appengine.api import apiproxy_stub
 from google.appengine.api import urlfetch
 from google.appengine.api import urlfetch_errors
 from google.appengine.api import urlfetch_service_pb
-from google.appengine.api import urlfetch_stub_cert_path
 from google.appengine.runtime import apiproxy_errors
 
 
@@ -127,9 +126,9 @@ def _SetupSSL(path):
                     'validate SSL certificates.')
 
 
-
-
-_SetupSSL(os.path.normpath(urlfetch_stub_cert_path.CERT_PATH))
+_SetupSSL(os.path.normpath(os.path.join(os.path.dirname(__file__), '..', '..',
+                                        '..', 'lib', 'cacerts',
+                                        'urlfetch_cacerts.txt')))
 
 def _IsAllowedPort(port):
 
@@ -361,15 +360,15 @@ class URLFetchServiceStub(apiproxy_stub.APIProxyStub):
 
 
 
-        header_key = header.key()
-        if header_key.lower() == 'user-agent':
-          adjusted_headers[header_key.title()] = [(
+        header_key = header.key().title()
+        if header_key == 'User-Agent':
+          adjusted_headers[header_key] = [(
               '%s %s' % (header.value(), adjusted_headers['User-Agent'][0]))]
-        elif header_key.lower() == 'accept-encoding':
+        elif header_key == 'Accept-Encoding':
           passthrough_content_encoding = True
-          adjusted_headers[header_key.title()] = [header.value()]
-        elif header_key.lower() == 'content-type':
-          adjusted_headers[header_key.title()] = [header.value()]
+          adjusted_headers[header_key] = [header.value()]
+        elif header_key == 'Content-Type':
+          adjusted_headers[header_key] = [header.value()]
         else:
           adjusted_headers.setdefault(header_key, []).append(header.value())
 
@@ -477,11 +476,6 @@ class URLFetchServiceStub(apiproxy_stub.APIProxyStub):
         raise apiproxy_errors.ApplicationError(
           urlfetch_service_pb.URLFetchServiceError.FETCH_ERROR, str(e))
 
-      if http_response.status >= 600:
-        raise apiproxy_errors.ApplicationError(
-            urlfetch_service_pb.URLFetchServiceError.FETCH_ERROR,
-            'Status %s unknown' % http_response.status)
-
 
 
 
@@ -489,7 +483,7 @@ class URLFetchServiceStub(apiproxy_stub.APIProxyStub):
 
         url = http_response.getheader('Location', None)
         if url is None:
-          error_msg = 'Missing "Location" header for redirect.'
+          error_msg = 'Redirecting response was missing "Location" header'
           logging.error(error_msg)
           raise apiproxy_errors.ApplicationError(
               urlfetch_service_pb.URLFetchServiceError.MALFORMED_REPLY,

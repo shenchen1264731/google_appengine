@@ -55,6 +55,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   serialized_pb=_b('\n\x1fstorage/speckle/proto/sql.proto\x12\x0bspeckle.sql\x1a\"storage/speckle/proto/client.proto\"\x8c\x03\n\x0b\x45xecRequest\x12\x10\n\x08instance\x18\x01 \x02(\t\x12\x14\n\x0cstatement_id\x18\x02 \x01(\x04\x12\x11\n\tstatement\x18\x03 \x01(\t\x12\x31\n\rbind_variable\x18\x04 \x03(\x0b\x32\x1a.speckle.BindVariableProto\x12\x15\n\rconnection_id\x18\x05 \x02(\x0c\x12%\n\x07options\x18\x06 \x01(\x0b\x32\x14.speckle.ExecOptions\x12I\n\x0estatement_type\x18\t \x01(\x0e\x32&.speckle.sql.ExecRequest.StatementType:\tSTATEMENT\x12\"\n\x05\x62\x61tch\x18\n \x01(\x0b\x32\x13.speckle.BatchProto\x12\x12\n\nrequest_id\x18\x0b \x01(\x04\"N\n\rStatementType\x12\r\n\tSTATEMENT\x10\x01\x12\x16\n\x12PREPARED_STATEMENT\x10\x02\x12\x16\n\x12\x43\x41LLABLE_STATEMENT\x10\x03\"b\n\x0c\x45xecResponse\x12$\n\x06result\x18\x01 \x01(\x0b\x32\x14.speckle.ResultProto\x12,\n\rsql_exception\x18\x02 \x01(\x0b\x32\x15.speckle.SqlException\"j\n\rExecOpRequest\x12\x10\n\x08instance\x18\x01 \x02(\t\x12\x15\n\rconnection_id\x18\x02 \x02(\x0c\x12\x1c\n\x02op\x18\x03 \x02(\x0b\x32\x10.speckle.OpProto\x12\x12\n\nrequest_id\x18\x08 \x01(\x04\"\xed\x01\n\x0e\x45xecOpResponse\x12\x12\n\nnative_sql\x18\x01 \x01(\t\x12%\n\tsavepoint\x18\x02 \x01(\x0b\x32\x12.speckle.SavePoint\x12,\n\rsql_exception\x18\x03 \x01(\x0b\x32\x15.speckle.SqlException\x12$\n\x06result\x18\x04 \x01(\x0b\x32\x14.speckle.ResultProto\x12\x30\n\x10\x63\x61\x63hed_rpc_error\x18\x05 \x01(\x0b\x32\x16.speckle.RpcErrorProto\x12\x1a\n\x0e\x63\x61\x63hed_payload\x18\x06 \x01(\x0c\x42\x02\x08\x01\"\xaa\x01\n\x0fMetadataRequest\x12\x10\n\x08instance\x18\x01 \x02(\t\x12\'\n\x08metadata\x18\x03 \x02(\x0e\x32\x15.speckle.MetadataType\x12\x31\n\rbind_variable\x18\x04 \x03(\x0b\x32\x1a.speckle.BindVariableProto\x12\x15\n\rconnection_id\x18\x05 \x02(\x0c\x12\x12\n\nrequest_id\x18\x08 \x01(\x04\"\xaa\x01\n\x10MetadataResponse\x12$\n\x06result\x18\x01 \x01(\x0b\x32\x14.speckle.ResultProto\x12\x42\n\x16jdbc_database_metadata\x18\x02 \x01(\x0b\x32\".speckle.JdbcDatabaseMetaDataProto\x12,\n\rsql_exception\x18\x03 \x01(\x0b\x32\x15.speckle.SqlException\"\xac\x01\n\x15OpenConnectionRequest\x12\x10\n\x08instance\x18\x01 \x02(\t\x12#\n\x08property\x18\x02 \x03(\x0b\x32\x11.speckle.Property\x12\x1b\n\x10protocol_version\x18\x05 \x01(\x04:\x01\x31\x12?\n\x0b\x63lient_type\x18\x06 \x01(\x0e\x32\x13.speckle.ClientType:\x15\x43LIENT_TYPE_JAVA_JDBC\"\x86\x01\n\x16OpenConnectionResponse\x12\x15\n\rconnection_id\x18\x01 \x01(\x0c\x12,\n\rsql_exception\x18\x02 \x01(\x0b\x32\x15.speckle.SqlException\x12\'\n\x08warnings\x18\x06 \x03(\x0b\x32\x15.speckle.SqlException\"A\n\x16\x43loseConnectionRequest\x12\x10\n\x08instance\x18\x01 \x02(\t\x12\x15\n\rconnection_id\x18\x02 \x02(\x0c\"G\n\x17\x43loseConnectionResponse\x12,\n\rsql_exception\x18\x01 \x01(\x0b\x32\x15.speckle.SqlException2\xac\x03\n\nSqlService\x12?\n\x04\x45xec\x12\x18.speckle.sql.ExecRequest\x1a\x19.speckle.sql.ExecResponse\"\x02P\x01\x12\x45\n\x06\x45xecOp\x12\x1a.speckle.sql.ExecOpRequest\x1a\x1b.speckle.sql.ExecOpResponse\"\x02P\x01\x12N\n\x0bGetMetadata\x12\x1c.speckle.sql.MetadataRequest\x1a\x1d.speckle.sql.MetadataResponse\"\x02P\x01\x12\x64\n\x0eOpenConnection\x12\".speckle.sql.OpenConnectionRequest\x1a#.speckle.sql.OpenConnectionResponse\"\tP\x01\x9a\x01\x04read\x12`\n\x0f\x43loseConnection\x12#.speckle.sql.CloseConnectionRequest\x1a$.speckle.sql.CloseConnectionResponse\"\x02P\x01\x42%\n\x1b\x63om.google.protos.cloud.sql\x10\x02 \x02(\x02P\x01')
   ,
   dependencies=[google_dot_storage_dot_speckle_dot_proto_dot_client__pb2.DESCRIPTOR,])
+_sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 
 
@@ -98,63 +99,63 @@ _EXECREQUEST = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='statement_id', full_name='speckle.sql.ExecRequest.statement_id', index=1,
       number=2, type=4, cpp_type=4, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='statement', full_name='speckle.sql.ExecRequest.statement', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='bind_variable', full_name='speckle.sql.ExecRequest.bind_variable', index=3,
       number=4, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='connection_id', full_name='speckle.sql.ExecRequest.connection_id', index=4,
       number=5, type=12, cpp_type=9, label=2,
       has_default_value=False, default_value=_b(""),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='options', full_name='speckle.sql.ExecRequest.options', index=5,
       number=6, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='statement_type', full_name='speckle.sql.ExecRequest.statement_type', index=6,
       number=9, type=14, cpp_type=8, label=1,
       has_default_value=True, default_value=1,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='batch', full_name='speckle.sql.ExecRequest.batch', index=7,
       number=10, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='request_id', full_name='speckle.sql.ExecRequest.request_id', index=8,
       number=11, type=4, cpp_type=4, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
   ],
   extensions=[
   ],
@@ -186,14 +187,14 @@ _EXECRESPONSE = _descriptor.Descriptor(
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='sql_exception', full_name='speckle.sql.ExecResponse.sql_exception', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
   ],
   extensions=[
   ],
@@ -224,28 +225,28 @@ _EXECOPREQUEST = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='connection_id', full_name='speckle.sql.ExecOpRequest.connection_id', index=1,
       number=2, type=12, cpp_type=9, label=2,
       has_default_value=False, default_value=_b(""),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='op', full_name='speckle.sql.ExecOpRequest.op', index=2,
       number=3, type=11, cpp_type=10, label=2,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='request_id', full_name='speckle.sql.ExecOpRequest.request_id', index=3,
       number=8, type=4, cpp_type=4, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
   ],
   extensions=[
   ],
@@ -276,42 +277,42 @@ _EXECOPRESPONSE = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='savepoint', full_name='speckle.sql.ExecOpResponse.savepoint', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='sql_exception', full_name='speckle.sql.ExecOpResponse.sql_exception', index=2,
       number=3, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='result', full_name='speckle.sql.ExecOpResponse.result', index=3,
       number=4, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='cached_rpc_error', full_name='speckle.sql.ExecOpResponse.cached_rpc_error', index=4,
       number=5, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='cached_payload', full_name='speckle.sql.ExecOpResponse.cached_payload', index=5,
       number=6, type=12, cpp_type=9, label=1,
       has_default_value=False, default_value=_b(""),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=_descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\010\001')), file=DESCRIPTOR),
+      options=_descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\010\001'))),
   ],
   extensions=[
   ],
@@ -342,35 +343,35 @@ _METADATAREQUEST = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='metadata', full_name='speckle.sql.MetadataRequest.metadata', index=1,
       number=3, type=14, cpp_type=8, label=2,
       has_default_value=False, default_value=1,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='bind_variable', full_name='speckle.sql.MetadataRequest.bind_variable', index=2,
       number=4, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='connection_id', full_name='speckle.sql.MetadataRequest.connection_id', index=3,
       number=5, type=12, cpp_type=9, label=2,
       has_default_value=False, default_value=_b(""),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='request_id', full_name='speckle.sql.MetadataRequest.request_id', index=4,
       number=8, type=4, cpp_type=4, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
   ],
   extensions=[
   ],
@@ -401,21 +402,21 @@ _METADATARESPONSE = _descriptor.Descriptor(
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='jdbc_database_metadata', full_name='speckle.sql.MetadataResponse.jdbc_database_metadata', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='sql_exception', full_name='speckle.sql.MetadataResponse.sql_exception', index=2,
       number=3, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
   ],
   extensions=[
   ],
@@ -446,28 +447,28 @@ _OPENCONNECTIONREQUEST = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='property', full_name='speckle.sql.OpenConnectionRequest.property', index=1,
       number=2, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='protocol_version', full_name='speckle.sql.OpenConnectionRequest.protocol_version', index=2,
       number=5, type=4, cpp_type=4, label=1,
       has_default_value=True, default_value=1,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='client_type', full_name='speckle.sql.OpenConnectionRequest.client_type', index=3,
       number=6, type=14, cpp_type=8, label=1,
       has_default_value=True, default_value=1,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
   ],
   extensions=[
   ],
@@ -498,21 +499,21 @@ _OPENCONNECTIONRESPONSE = _descriptor.Descriptor(
       has_default_value=False, default_value=_b(""),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='sql_exception', full_name='speckle.sql.OpenConnectionResponse.sql_exception', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='warnings', full_name='speckle.sql.OpenConnectionResponse.warnings', index=2,
       number=6, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
   ],
   extensions=[
   ],
@@ -543,14 +544,14 @@ _CLOSECONNECTIONREQUEST = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='connection_id', full_name='speckle.sql.CloseConnectionRequest.connection_id', index=1,
       number=2, type=12, cpp_type=9, label=2,
       has_default_value=False, default_value=_b(""),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
   ],
   extensions=[
   ],
@@ -581,7 +582,7 @@ _CLOSECONNECTIONRESPONSE = _descriptor.Descriptor(
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None, file=DESCRIPTOR),
+      options=None),
   ],
   extensions=[
   ],
@@ -630,7 +631,6 @@ DESCRIPTOR.message_types_by_name['OpenConnectionRequest'] = _OPENCONNECTIONREQUE
 DESCRIPTOR.message_types_by_name['OpenConnectionResponse'] = _OPENCONNECTIONRESPONSE
 DESCRIPTOR.message_types_by_name['CloseConnectionRequest'] = _CLOSECONNECTIONREQUEST
 DESCRIPTOR.message_types_by_name['CloseConnectionResponse'] = _CLOSECONNECTIONRESPONSE
-_sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 ExecRequest = _reflection.GeneratedProtocolMessageType('ExecRequest', (_message.Message,), dict(
   DESCRIPTOR = _EXECREQUEST,
@@ -708,66 +708,6 @@ DESCRIPTOR._options = _descriptor._ParseOptions(descriptor_pb2.FileOptions(), _b
 _EXECOPRESPONSE.fields_by_name['cached_payload'].has_options = True
 _EXECOPRESPONSE.fields_by_name['cached_payload']._options = _descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b('\010\001'))
 
-_SQLSERVICE = _descriptor.ServiceDescriptor(
-  name='SqlService',
-  full_name='speckle.sql.SqlService',
-  file=DESCRIPTOR,
-  index=0,
-  options=None,
-  serialized_start=1730,
-  serialized_end=2158,
-  methods=[
-  _descriptor.MethodDescriptor(
-    name='Exec',
-    full_name='speckle.sql.SqlService.Exec',
-    index=0,
-    containing_service=None,
-    input_type=_EXECREQUEST,
-    output_type=_EXECRESPONSE,
-    options=_descriptor._ParseOptions(descriptor_pb2.MethodOptions(), _b('P\001')),
-  ),
-  _descriptor.MethodDescriptor(
-    name='ExecOp',
-    full_name='speckle.sql.SqlService.ExecOp',
-    index=1,
-    containing_service=None,
-    input_type=_EXECOPREQUEST,
-    output_type=_EXECOPRESPONSE,
-    options=_descriptor._ParseOptions(descriptor_pb2.MethodOptions(), _b('P\001')),
-  ),
-  _descriptor.MethodDescriptor(
-    name='GetMetadata',
-    full_name='speckle.sql.SqlService.GetMetadata',
-    index=2,
-    containing_service=None,
-    input_type=_METADATAREQUEST,
-    output_type=_METADATARESPONSE,
-    options=_descriptor._ParseOptions(descriptor_pb2.MethodOptions(), _b('P\001')),
-  ),
-  _descriptor.MethodDescriptor(
-    name='OpenConnection',
-    full_name='speckle.sql.SqlService.OpenConnection',
-    index=3,
-    containing_service=None,
-    input_type=_OPENCONNECTIONREQUEST,
-    output_type=_OPENCONNECTIONRESPONSE,
-    options=_descriptor._ParseOptions(descriptor_pb2.MethodOptions(), _b('P\001\232\001\004read')),
-  ),
-  _descriptor.MethodDescriptor(
-    name='CloseConnection',
-    full_name='speckle.sql.SqlService.CloseConnection',
-    index=4,
-    containing_service=None,
-    input_type=_CLOSECONNECTIONREQUEST,
-    output_type=_CLOSECONNECTIONRESPONSE,
-    options=_descriptor._ParseOptions(descriptor_pb2.MethodOptions(), _b('P\001')),
-  ),
-])
-_sym_db.RegisterServiceDescriptor(_SQLSERVICE)
-
-DESCRIPTOR.services_by_name['SqlService'] = _SQLSERVICE
-
-
 
 class _SqlService_ClientBaseStub(_client_stub_base_class):
   """Makes Stubby RPC calls to a SqlService server."""
@@ -780,9 +720,8 @@ class _SqlService_ClientBaseStub(_client_stub_base_class):
       '_protorpc_CloseConnection', '_full_name_CloseConnection',
   )
 
-  def __init__(self, rpc_stub, rpc_factory=None):
-    super(_SqlService_ClientBaseStub, self).__init__(
-        None, inject_stub=rpc_stub, rpc_factory=rpc_factory)
+  def __init__(self, rpc_stub):
+    self._stub = rpc_stub
 
     self._protorpc_Exec = pywraprpc.RPC()
     self._protorpc_Exec.set_fail_fast(True)
@@ -942,27 +881,26 @@ class _SqlService_ClientBaseStub(_client_stub_base_class):
 
 class _SqlService_ClientStub(_SqlService_ClientBaseStub):
   __slots__ = ('_params',)
-  def __init__(self, rpc_stub_parameters, service_name, rpc_factory=None):
+  def __init__(self, rpc_stub_parameters, service_name):
     if service_name is None:
       service_name = 'SqlService'
-    stub = pywraprpc.RPC_GenericStub(service_name, rpc_stub_parameters)
-    super(_SqlService_ClientStub, self).__init__(stub, rpc_factory=rpc_factory)
+    _SqlService_ClientBaseStub.__init__(self, pywraprpc.RPC_GenericStub(service_name, rpc_stub_parameters))
     self._params = rpc_stub_parameters
 
 
 class _SqlService_RPC2ClientStub(_SqlService_ClientBaseStub):
   __slots__ = ()
-  def __init__(self, server, channel, service_name, rpc_factory=None):
+  def __init__(self, server, channel, service_name):
     if service_name is None:
       service_name = 'SqlService'
-    if channel is None:
-      if server is None:
-        raise RuntimeError('Invalid argument combination to create a stub')
-      channel = pywraprpc.NewClientChannel(server)
-    elif channel.version() == 1:
-      raise RuntimeError('Expecting an RPC2 channel to create the stub')
-    stub = pywraprpc.RPC_GenericStub(service_name, channel)
-    super(_SqlService_RPC2ClientStub, self).__init__(stub, rpc_factory=rpc_factory)
+    if channel is not None:
+      if channel.version() == 1:
+        raise RuntimeError('Expecting an RPC2 channel to create the stub')
+      _SqlService_ClientBaseStub.__init__(self, pywraprpc.RPC_GenericStub(service_name, channel))
+    elif server is not None:
+      _SqlService_ClientBaseStub.__init__(self, pywraprpc.RPC_GenericStub(service_name, pywraprpc.NewClientChannel(server)))
+    else:
+      raise RuntimeError('Invalid argument combination to create a stub')
 
 
 class SqlService(_server_stub_base_class):
@@ -1001,23 +939,20 @@ class SqlService(_server_stub_base_class):
     _server_stub_base_class.__init__(self, 'speckle.sql.SqlService', *args, **kwargs)
 
   @staticmethod
-  def NewStub(rpc_stub_parameters, service_name=None, rpc_factory=None):
+  def NewStub(rpc_stub_parameters, service_name=None):
     """Creates a new SqlService Stubby client stub.
 
     Args:
       rpc_stub_parameters: an RPC_StubParameters instance.
       service_name: the service name used by the Stubby server.
-      rpc_factory: the rpc factory to use if no rpc argument is specified.
     """
 
     if _client_stub_base_class is object:
       raise RuntimeError('Add //net/rpc/python as a dependency to use Stubby')
-    return _SqlService_ClientStub(
-        rpc_stub_parameters, service_name, rpc_factory=rpc_factory)
+    return _SqlService_ClientStub(rpc_stub_parameters, service_name)
 
   @staticmethod
-  def NewRPC2Stub(
-      server=None, channel=None, service_name=None, rpc_factory=None):
+  def NewRPC2Stub(server=None, channel=None, service_name=None):
     """Creates a new SqlService Stubby2 client stub.
 
     Args:
@@ -1025,13 +960,11 @@ class SqlService(_server_stub_base_class):
       channel: directly use a channel to create a stub. Will ignore server
           argument if this is specified.
       service_name: the service name used by the Stubby server.
-      rpc_factory: the rpc factory to use if no rpc argument is specified.
     """
 
     if _client_stub_base_class is object:
       raise RuntimeError('Add //net/rpc/python as a dependency to use Stubby')
-    return _SqlService_RPC2ClientStub(
-        server, channel, service_name, rpc_factory=rpc_factory)
+    return _SqlService_RPC2ClientStub(server, channel, service_name)
 
   def Exec(self, rpc, request, response):
     """Handles a Exec RPC call. You should override this.

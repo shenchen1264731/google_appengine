@@ -19,18 +19,11 @@
 
 
 import cStringIO
-import getpass
-import itertools
-import os
 import pickle
-import sys
 import tempfile
 import unittest
 import urllib
 import wsgiref.util
-
-import google
-import mox
 
 from google.net.rpc.python.testing import rpc_test_harness
 
@@ -38,13 +31,11 @@ from google.appengine.api import apiproxy_stub
 from google.appengine.api import apiproxy_stub_map
 from google.appengine.api import urlfetch_service_pb
 from google.appengine.api import user_service_pb
-from google.appengine.datastore import datastore_pb
 from google.appengine.datastore import datastore_stub_util
 from google.appengine.datastore import datastore_v4_pb
 from google.appengine.ext.remote_api import remote_api_pb
 from google.appengine.runtime import apiproxy_errors
 from google.appengine.tools.devappserver2 import api_server
-from google.appengine.tools.devappserver2 import datastore_grpc_stub
 from google.appengine.tools.devappserver2 import wsgi_request_info
 from google.appengine.tools.devappserver2 import wsgi_test_utils
 
@@ -91,7 +82,7 @@ class FakeDatastoreV4ServiceStub(apiproxy_stub.APIProxyStub):
 
 def setup_stubs():
   """Setup the API stubs. This can only be done once."""
-  api_server.setup_test_stubs(
+  api_server.test_setup_stubs(
       request_data,
       app_id=APP_ID,
       application_root=APPLICATION_ROOT,
@@ -118,7 +109,7 @@ def setup_stubs():
       'datastore_v4', FakeDatastoreV4ServiceStub())
 
 
-class APIServerTestBase(wsgi_test_utils.WSGITestCase):
+class TestAPIServer(wsgi_test_utils.WSGITestCase):
   """Tests for api_server.APIServer."""
 
   def setUp(self):
@@ -161,9 +152,6 @@ class APIServerTestBase(wsgi_test_utils.WSGITestCase):
                           expected_remote_response.Encode(),
                           self.server,
                           environ)
-
-
-class TestAPIServer(APIServerTestBase):
 
   def test_user_api_call(self):
     logout_response = user_service_pb.CreateLogoutURLResponse()
@@ -246,137 +234,6 @@ class TestAPIServer(APIServerTestBase):
 
     self._assert_remote_call(
         expected_remote_response, urlfetch_request, 'urlfetch', 'Fetch')
-
-
-class TestAPIServerWithEmulator(APIServerTestBase):
-  """Test ApiServer working with cloud datastore emulator."""
-
-  def setUp(self):
-    super(TestAPIServerWithEmulator, self).setUp()
-    apiproxy_stub_map.apiproxy.ReplaceStub(
-        'datastore_v3', datastore_grpc_stub.DatastoreGrpcStub(''))
-
-  def test_datastore_emulator_request_too_large(self):
-    fake_put_request = datastore_pb.PutRequest()
-    fake_put_request.Encode = lambda: 'x' * (apiproxy_stub.MAX_REQUEST_SIZE + 1)
-
-    expected_remote_response = remote_api_pb.Response()
-    expected_remote_response.set_exception(pickle.dumps(
-        apiproxy_errors.RequestTooLargeError(
-            apiproxy_stub.REQ_SIZE_EXCEEDS_LIMIT_MSG_TEMPLATE % (
-                'datastore_v3', 'Put'))))
-    self._assert_remote_call(expected_remote_response, fake_put_request,
-                             'datastore_v3', 'Put')
-
-
-class GetStoragePathTest(unittest.TestCase):
-  """Tests for api_server.get_storage_path."""
-
-  def setUp(self):
-    self.mox = mox.Mox()
-    self.mox.StubOutWithMock(api_server, '_generate_storage_paths')
-
-  def tearDown(self):
-    self.mox.UnsetStubs()
-
-  def test_no_path_given_directory_does_not_exist(self):
-    path = tempfile.mkdtemp()
-    os.rmdir(path)
-    api_server._generate_storage_paths('example.com_myapp').AndReturn([path])
-
-    self.mox.ReplayAll()
-    self.assertEqual(
-        path, api_server.get_storage_path(None, 'dev~example.com:myapp'))
-    self.mox.VerifyAll()
-    self.assertTrue(os.path.isdir(path))
-
-  def test_no_path_given_directory_exists(self):
-    path1 = tempfile.mkdtemp()
-    os.chmod(path1, 0777)
-    path2 = tempfile.mkdtemp()  # Made with mode 0700.
-
-    api_server._generate_storage_paths('example.com_myapp').AndReturn(
-        [path1, path2])
-
-    self.mox.ReplayAll()
-    if sys.platform == 'win32':
-      expected_path = path1
-    else:
-      expected_path = path2
-    self.assertEqual(
-        expected_path,
-        api_server.get_storage_path(None, 'dev~example.com:myapp'))
-    self.mox.VerifyAll()
-
-  def test_path_given_does_not_exist(self):
-    path = tempfile.mkdtemp()
-    os.rmdir(path)
-
-    self.assertEqual(
-        path, api_server.get_storage_path(path, 'dev~example.com:myapp'))
-    self.assertTrue(os.path.isdir(path))
-
-  def test_path_given_not_directory(self):
-    _, path = tempfile.mkstemp()
-
-    self.assertRaises(
-        IOError, api_server.get_storage_path, path, 'dev~example.com:myapp')
-
-  def test_path_given_exists(self):
-    path = tempfile.mkdtemp()
-
-    self.assertEqual(
-        path, api_server.get_storage_path(path, 'dev~example.com:myapp'))
-
-
-class GenerateStoragePathsTest(unittest.TestCase):
-  """Tests for api_server._generate_storage_paths."""
-
-  def setUp(self):
-    self.mox = mox.Mox()
-    self.mox.StubOutWithMock(getpass, 'getuser')
-    self.mox.StubOutWithMock(tempfile, 'gettempdir')
-
-  def tearDown(self):
-    self.mox.UnsetStubs()
-
-  @unittest.skipUnless(sys.platform.startswith('win'), 'Windows only')
-  def test_windows(self):
-    tempfile.gettempdir().AndReturn('/tmp')
-
-    self.mox.ReplayAll()
-    self.assertEqual(
-        [os.path.join('/tmp', 'appengine.myapp'),
-         os.path.join('/tmp', 'appengine.myapp.1'),
-         os.path.join('/tmp', 'appengine.myapp.2')],
-        list(itertools.islice(api_server._generate_storage_paths('myapp'), 3)))
-    self.mox.VerifyAll()
-
-  @unittest.skipIf(sys.platform.startswith('win'), 'not on Windows')
-  def test_working_getuser(self):
-    getpass.getuser().AndReturn('johndoe')
-    tempfile.gettempdir().AndReturn('/tmp')
-
-    self.mox.ReplayAll()
-    self.assertEqual(
-        [os.path.join('/tmp', 'appengine.myapp.johndoe'),
-         os.path.join('/tmp', 'appengine.myapp.johndoe.1'),
-         os.path.join('/tmp', 'appengine.myapp.johndoe.2')],
-        list(itertools.islice(api_server._generate_storage_paths('myapp'), 3)))
-    self.mox.VerifyAll()
-
-  @unittest.skipIf(sys.platform.startswith('win'), 'not on Windows')
-  def test_broken_getuser(self):
-    getpass.getuser().AndRaise(Exception())
-    tempfile.gettempdir().AndReturn('/tmp')
-
-    self.mox.ReplayAll()
-    self.assertEqual(
-        [os.path.join('/tmp', 'appengine.myapp'),
-         os.path.join('/tmp', 'appengine.myapp.1'),
-         os.path.join('/tmp', 'appengine.myapp.2')],
-        list(itertools.islice(api_server._generate_storage_paths('myapp'), 3)))
-    self.mox.VerifyAll()
 
 
 if __name__ == '__main__':

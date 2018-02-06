@@ -44,7 +44,6 @@ from google.appengine.api import yaml_builder
 from google.appengine.api import yaml_errors
 from google.appengine.api import yaml_listener
 from google.appengine.api import yaml_object
-from google.appengine.api.namespace_manager import namespace_manager
 from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.mapreduce import base_handler
@@ -68,7 +67,7 @@ class UserParam(validation.Validated):
   """A user-supplied parameter to a mapreduce job."""
 
   ATTRIBUTES = {
-      "name": r"[a-zA-Z0-9_\.]+",
+      "name":  r"[a-zA-Z0-9_\.]+",
       "default": validation.Optional(r".*"),
       "value": validation.Optional(r".*"),
   }
@@ -285,7 +284,7 @@ class ResourceHandler(webapp.RequestHandler):
       "status": ("overview.html", "text/html"),
       "detail": ("detail.html", "text/html"),
       "base.css": ("base.css", "text/css"),
-      "jquery.js": ("jquery1.min.js", "text/javascript"),
+      "jquery.js": ("jquery-1.6.1.min.js", "text/javascript"),
       "jquery-json.js": ("jquery.json-2.2.min.js", "text/javascript"),
       "jquery-url.js": ("jquery.url.js", "text/javascript"),
       "status.js": ("status.js", "text/javascript"),
@@ -366,8 +365,7 @@ class GetJobDetailHandler(base_handler.GetJsonHandler):
       raise BadStatusParameterError("'mapreduce_id' was invalid")
     job = model.MapreduceState.get_by_key_name(mapreduce_id)
     if job is None:
-      raise KeyError("Could not find job with ID:%r in namespace:%s" %
-                     (mapreduce_id, namespace_manager.get_namespace()))
+      raise KeyError("Could not find job with ID %r" % mapreduce_id)
 
     self.json_response.update(job.mapreduce_spec.to_json())
     self.json_response.update(job.counters_map.to_json())
